@@ -29,6 +29,10 @@ func (r *PetitionsRoutes) RegisterRoutes() {
 
 		V1PetitionRoute := V1Route.Group("/petitions")
 		V1PetitionRoute.POST("/", r.V1Handler.CreatePetition)
+		V1PetitionRoute.GET("/", r.V1Handler.GetAllPetitions)
+		V1PetitionRoute.DELETE("/:id", r.V1Handler.Delete)
+		V1PetitionRoute.POST("/:id/like", r.V1Handler.LikePetition)
+		V1PetitionRoute.POST("/:id/voice", r.V1Handler.VoicePetition)
 
 	}
 }

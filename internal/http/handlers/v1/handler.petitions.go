@@ -40,3 +40,24 @@ func (h *PetitionsHandler) CreatePetition(ctx *gin.Context) {
 
 	NewSuccessResponse(ctx, http.StatusOK)
 }
+
+func (h *PetitionsHandler) GetAllPetitions(ctx *gin.Context) {
+
+	// TODO: implement
+	panic("implement me")
+}
+
+func (h *PetitionsHandler) Delete(ctx *gin.Context) {
+	// TODO: implement
+	panic("implement me")
+}
+
+func (h *PetitionsHandler) LikePetition(ctx *gin.Context) {
+	// TODO: implement
+	panic("implement me")
+}
+
+func (h *PetitionsHandler) VoicePetition(ctx *gin.Context) {
+	// TODO: implement
+	panic("implement me")
+}

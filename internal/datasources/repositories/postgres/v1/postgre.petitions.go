@@ -2,7 +2,7 @@ package v1
 
 import (
 	V1Domains "change-it/internal/business/domains/v1"
-	"change-it/internal/datasources/records"
+	V1Records "change-it/internal/datasources/records/v1"
 	"context"
 	"github.com/jmoiron/sqlx"
 )
@@ -18,7 +18,7 @@ func NewPetitionRepository(conn *sqlx.DB) V1Domains.PetitionRepository {
 }
 
 func (p *postgrePetitonRepository) Create(ctx context.Context, domain *V1Domains.PetitionDomain) (err error) {
-	_, err = p.conn.NamedQueryContext(ctx, "INSERT INTO petitions (id, title, description, owner_id, likes, voices, created_at, updated_at) VALUES (uuid_generate_v4(), :title, :description, :owner_id, :likes, :voices, current_timestamp, current_timestamp)", records.FromPetitionsV1Domain(domain))
+	_, err = p.conn.NamedQueryContext(ctx, "INSERT INTO petitions (id, title, description, owner_id, likes, voices, created_at, updated_at) VALUES (uuid_generate_v4(), :title, :description, :owner_id, :likes, :voices, current_timestamp, current_timestamp)", V1Records.FromPetitionsV1Domain(domain))
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (p *postgrePetitonRepository) Like(ctx context.Context, id string, userId s
 		return err
 	}
 
-	like := records.Likes{
+	like := V1Records.Likes{
 		UserId:     userId,
 		PetitionId: id,
 	}
@@ -68,7 +68,7 @@ func (p *postgrePetitonRepository) Voice(ctx context.Context, id string, userId 
 		return err
 	}
 
-	like := records.Likes{
+	like := V1Records.Likes{
 		UserId:     userId,
 		PetitionId: id,
 	}
@@ -90,10 +90,10 @@ func (p *postgrePetitonRepository) Voice(ctx context.Context, id string, userId 
 }
 
 func (p *postgrePetitonRepository) GetAll(ctx context.Context) (outDomains []V1Domains.PetitionDomain, err error) {
-	var petitionsRecords []records.Petitions
+	var petitionsRecords []V1Records.Petitions
 	err = p.conn.SelectContext(ctx, &petitionsRecords, "SELECT * FROM petitions OFFSET 0 LIMIT 5")
 	if err != nil {
 		return nil, err
 	}
-	return records.ToArrayOfPetitionsV1Domain(&petitionsRecords), nil
+	return V1Records.ToArrayOfPetitionsV1Domain(&petitionsRecords), nil
 }

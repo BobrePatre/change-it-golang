@@ -1,6 +1,6 @@
-package records
+package v1
 
-type Voices struct {
+type Likes struct {
 	UserId     string `db:"user_id"`
 	PetitionId string `db:"petition_id"`
 }

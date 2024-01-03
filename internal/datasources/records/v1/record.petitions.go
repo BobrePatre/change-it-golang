@@ -1,4 +1,4 @@
-package records
+package v1
 
 import (
 	V1Domains "change-it/internal/business/domains/v1"
