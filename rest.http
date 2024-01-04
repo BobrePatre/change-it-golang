@@ -3,6 +3,17 @@ POST http://localhost:2000/api/v1/petitions
 Content-Type: application/json
 
 {
-  "title": "hello world",
+  "title": "hello world!",
   "description": "i like golang!!"
 }
+
+
+
+###
+GET http://localhost:2000/api/v1/petitions
+
+
+
+###
+POST http://localhost:2000/api/v1/petitions//like
+

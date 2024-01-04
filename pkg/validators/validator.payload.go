@@ -20,12 +20,32 @@ var mapHelepr = map[string]string{
 
 var needParam = []string{"min", "max", "containsany"}
 
-func ValidatePayloads(payload interface{}) (err error) {
+func ValidateParam(param any, tags ...string) (err error) {
 	validate := validator.New()
-	err = validate.RegisterValidation("valid-uuid", validUuid)
+	err = validate.RegisterValidation("uuid", validUuid)
 	if err != nil {
 		return err
 	}
+	var message string
+	for _, tag := range tags {
+		err = validate.Var(param, tag)
+		if err != nil {
+			if helpers.IsArrayContains(needParam, tag) {
+				message = errWithParam()
+			}
+			return errors.New(err.Error()
+		}
+	}
+}
+
+
+func ValidatePayloads(payload interface{}) (err error) {
+	validate := validator.New()
+	err = validate.RegisterValidation("uuid", validUuid)
+	if err != nil {
+		return err
+	}
+
 	var field, param, value, tag, message string
 	err = validate.Struct(payload)
 	if err != nil {
@@ -71,5 +91,4 @@ func validUuid(fl validator.FieldLevel) bool {
 	pattern := `(?i)^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`
 	re := regexp.MustCompile(pattern)
 	return re.MatchString(fl.Field().String())
-
 }

@@ -29,10 +29,10 @@ func FromV1Domain(domain *V1Domains.PetitionDomain) *PetitionResponse {
 	}
 }
 
-func ArrayFromV1Domains(domains []V1Domains.PetitionDomain) []*PetitionResponse {
+func ArrayFromV1Domains(domains []*V1Domains.PetitionDomain) []*PetitionResponse {
 	var out []*PetitionResponse
 	for _, domain := range domains {
-		out = append(out, FromV1Domain(&domain))
+		out = append(out, FromV1Domain(domain))
 	}
 	return out
 }

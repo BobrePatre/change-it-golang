@@ -2,9 +2,13 @@ package v1
 
 import (
 	V1Domains "change-it/internal/business/domains/v1"
+	V1DomainErrors "change-it/internal/business/errors/v1"
 	V1Requests "change-it/internal/http/datatransfers/requests/v1"
+	V1Responses "change-it/internal/http/datatransfers/responses/v1"
 	"change-it/pkg/validators"
+	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"net/http"
 )
 
@@ -20,6 +24,11 @@ func NewPetitionsHandler(usecase V1Domains.PetitionUseсase) PetitionsHandler {
 
 func (h *PetitionsHandler) CreatePetition(ctx *gin.Context) {
 
+	var id string
+	if err := ctx.ShouldBindHeader(&id); err != nil {
+
+	}
+
 	var request V1Requests.PetitionRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
@@ -32,29 +41,65 @@ func (h *PetitionsHandler) CreatePetition(ctx *gin.Context) {
 	}
 
 	petitionDomain := request.ToV1Domain()
-	err := h.usecase.Create(ctx, petitionDomain)
+	err := h.usecase.Save(ctx, petitionDomain)
 	if err != nil {
 		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
-		return
 	}
 
 	NewSuccessResponse(ctx, http.StatusOK)
 }
 
 func (h *PetitionsHandler) GetAllPetitions(ctx *gin.Context) {
+	petitionDomains, err := h.usecase.GetAll(ctx)
+	if err != nil {
+		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
 
-	// TODO: implement
-	panic("implement me")
+	NewSuccessResponseWithData(ctx, http.StatusOK, V1Responses.ArrayFromV1Domains(petitionDomains))
 }
 
 func (h *PetitionsHandler) Delete(ctx *gin.Context) {
-	// TODO: implement
-	panic("implement me")
+	id := ctx.Param("id")
+	if id == "" {
+		NewErrorResponse(ctx, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	if err := validators.
+
+	err := h.usecase.Delete(ctx, id, uuid.New().String())
+	if err != nil {
+		var nferr *V1DomainErrors.NotFoundError
+		if errors.Is(err, nferr) {
+			NewErrorResponse(ctx, nferr.StatusCode, err.Error())
+			return
+		}
+		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+	NewSuccessResponse(ctx, http.StatusOK)
 }
 
 func (h *PetitionsHandler) LikePetition(ctx *gin.Context) {
-	// TODO: implement
-	panic("implement me")
+
+	id := ctx.Param("id")
+	if id == "" {
+		NewErrorResponse(ctx, http.StatusBadRequest, "invalid id")
+		return
+	}
+
+	err := h.usecase.Like(ctx, id, uuid.New().String())
+	if err != nil {
+		var nferr *V1DomainErrors.NotFoundError
+		if errors.Is(err, nferr) {
+			NewErrorResponse(ctx, nferr.StatusCode, err.Error())
+			return
+		}
+		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+	NewSuccessResponse(ctx, http.StatusOK)
 }
 
 func (h *PetitionsHandler) VoicePetition(ctx *gin.Context) {

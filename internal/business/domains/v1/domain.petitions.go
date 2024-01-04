@@ -17,17 +17,19 @@ type PetitionDomain struct {
 }
 
 type PetitionUseсase interface {
-	Create(ctx context.Context, domain *PetitionDomain) (err error)
+	Save(ctx context.Context, domain *PetitionDomain) (err error)
 	Delete(ctx context.Context, id string, userId string) (err error)
 	Like(ctx context.Context, id string, userId string) (err error)
 	Voice(ctx context.Context, id string, userId string) (err error)
-	GetAll(ctx context.Context) ([]PetitionDomain, error)
+	GetAll(ctx context.Context) ([]*PetitionDomain, error)
 }
 
 type PetitionRepository interface {
 	Create(ctx context.Context, domain *PetitionDomain) (err error)
+	Update(ctx context.Context, domain *PetitionDomain) (err error)
 	Delete(ctx context.Context, id string) (err error)
 	Like(ctx context.Context, id string, userId string) (err error)
 	Voice(ctx context.Context, id string, userId string) (err error)
-	GetAll(ctx context.Context) (outDomains []PetitionDomain, err error)
+	GetAll(ctx context.Context) (outDomains []*PetitionDomain, err error)
+	GetByID(ctx context.Context, id string) (outDomain *PetitionDomain, err error)
 }

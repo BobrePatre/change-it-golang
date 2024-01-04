@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"change-it/internal/constants"
+	"change-it/internal/http/middlewares"
 	"github.com/gin-gonic/gin"
-	"github.com/snykk/go-rest-boilerplate/internal/constants"
-	"github.com/snykk/go-rest-boilerplate/internal/http/middlewares"
 	"github.com/stretchr/testify/assert"
 )
 
