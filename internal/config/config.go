@@ -15,6 +15,10 @@ type Config struct {
 	DBPostgreDriver string `mapstructure:"DB_POSTGRE_DRIVER"`
 	DBPostgreDsn    string `mapstructure:"DB_POSTGRE_DSN"`
 	DBPostgreURL    string `mapstructure:"DB_POSTGRE_URL"`
+
+	AUTHJwkSecretUri string `mapstructure:"AUTH_JWK_SECRET_URI"`
+	AUTHRealm        string `mapstructure:"AUTH_REALM"`
+	AUTHClient       string `mapstructure:"AUTH_CLIENT"`
 }
 
 func InitializeAppConfig() error {

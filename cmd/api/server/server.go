@@ -7,6 +7,7 @@ import (
 	"change-it/internal/http/routes/v1"
 	"change-it/internal/utils"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -62,7 +63,7 @@ func (a *App) Run() (err error) {
 	// Gracefull Shutdown
 	go func() {
 		logger.InfoF("success to listen and serve on :%d", logrus.Fields{constants.LoggerCategory: constants.LoggerCategoryServer}, config.AppConfig.Port)
-		if err := a.HttpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := a.HttpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("Failed to listen and serve: %+v", err)
 		}
 	}()
@@ -100,6 +101,7 @@ func setupRouter() *gin.Engine {
 	router := gin.New()
 
 	// set up middlewares
+	middlewares.InitializeAuthMiddleware()
 	router.Use(middlewares.CORSMiddleware())
 	router.Use(gin.LoggerWithFormatter(logger.HTTPLogger))
 	router.Use(gin.Recovery())
