@@ -7,7 +7,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -21,8 +20,9 @@ const (
 )
 
 var (
-	up   bool
-	down bool
+	up    bool
+	down  bool
+	clean bool
 )
 
 func init() {
@@ -35,6 +35,7 @@ func init() {
 func main() {
 	flag.BoolVar(&up, "up", false, "involves creating new tables, columns, or other database structures")
 	flag.BoolVar(&down, "down", false, "involves dropping tables, columns, or other structures")
+	flag.BoolVar(&clean, "clean", false, "involves dropping tables, then creating new tables, columns, or other database structures")
 	flag.Parse()
 
 	db, err := utils.SetupPostgresConnection()
@@ -61,6 +62,17 @@ func main() {
 			logger.Fatal(err.Error(), logrus.Fields{constants.LoggerCategory: constants.LoggerCategoryMigration})
 		}
 	}
+
+	if clean {
+		err = migrate(db, "down")
+		if err != nil {
+			logger.Fatal(err.Error(), logrus.Fields{constants.LoggerCategory: constants.LoggerCategoryMigration})
+		}
+		err = migrate(db, "up")
+		if err != nil {
+			logger.Fatal(err.Error(), logrus.Fields{constants.LoggerCategory: constants.LoggerCategoryMigration})
+		}
+	}
 }
 
 func migrate(db *sqlx.DB, action string) (err error) {
@@ -78,7 +90,7 @@ func migrate(db *sqlx.DB, action string) (err error) {
 
 	for _, file := range files {
 		logger.Info("Executing migration", logrus.Fields{constants.LoggerCategory: constants.LoggerCategoryMigration, constants.LoggerFile: file})
-		data, err := ioutil.ReadFile(file)
+		data, err := os.ReadFile(file)
 		if err != nil {
 			return errors.New("error when read file")
 		}

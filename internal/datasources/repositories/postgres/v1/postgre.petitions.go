@@ -34,7 +34,7 @@ func (p *postgrePetitonRepository) Update(ctx context.Context, domain *V1Domains
 
 func (p *postgrePetitonRepository) Delete(ctx context.Context, id string) (err error) {
 
-	_, err = p.conn.NamedQueryContext(ctx, "DELETE FROM petitions WHERE id = :id", id)
+	_, err = p.conn.QueryContext(ctx, "DELETE FROM petitions WHERE id = $1", id)
 	if err != nil {
 		return err
 	}
@@ -59,12 +59,7 @@ func (p *postgrePetitonRepository) Like(ctx context.Context, id string, userId s
 
 func (p *postgrePetitonRepository) Voice(ctx context.Context, id string, userId string) (err error) {
 
-	voice := V1Records.Voices{
-		UserId:     userId,
-		PetitionId: id,
-	}
-
-	_, err = p.conn.NamedQueryContext(ctx, "INSERT INTO voices (user_id, petition_id) VALUES (:user_id, :petition_id)", voice)
+	_, err = p.conn.QueryContext(ctx, "INSERT INTO voices (user_id, petition_id) VALUES ($1, $2)", userId, id)
 	if err != nil {
 		return err
 	}
@@ -74,16 +69,15 @@ func (p *postgrePetitonRepository) Voice(ctx context.Context, id string, userId 
 func (p *postgrePetitonRepository) GetByID(ctx context.Context, id string) (outDomain *V1Domains.PetitionDomain, err error) {
 	var petitionRecord V1Records.Petitions
 
-	id = "4d8efe0b-e592-494e-bd4f-43d36d9944ee"
 	query := `
-       SELECT p.*, COUNT(l.*) AS likes_count, COUNT(v.*) AS voices_count
-       FROM petitions AS p
-       LEFT JOIN likes AS l ON p.id = l.petition_id
-       LEFT JOIN voices AS v ON p.id = v.petition_id
-       WHERE p.id = '4d8efe0b-e592-494e-bd4f-43d36d9944ee' GROUP BY p.id
+       SELECT petitions.*, 
+              (SELECT COUNT(*) FROM likes where petition_id = petitions.id) AS likes_count, 
+              (SELECT COUNT(*) FROM voices where petition_id = petitions.id) AS voices_count
+       FROM petitions 
+       WHERE petitions.id = $1 GROUP BY petitions.id
    `
 	logger.Info("Executing query with id", logrus.Fields{"id": id})
-	err = p.conn.GetContext(ctx, &petitionRecord, query)
+	err = p.conn.GetContext(ctx, &petitionRecord, query, id)
 	if err != nil {
 		logger.Error("Failed to execute query", logrus.Fields{"error": err.Error()})
 		return nil, &V1DatasourceErrors.NotFoundError{Message: err.Error()}
@@ -95,21 +89,25 @@ func (p *postgrePetitonRepository) GetByID(ctx context.Context, id string) (outD
 func (p *postgrePetitonRepository) GetAll(ctx context.Context) (outDomains []*V1Domains.PetitionDomain, err error) {
 	query := `
         SELECT 
-            petitions.*,
-            (SELECT COUNT(*) FROM likes WHERE petition_id = petitions.id) AS likes_count,
+            petitions.*, 
+            (SELECT COUNT(*) FROM likes WHERE petition_id = petitions.id) AS likes_count, 
             (SELECT COUNT(*) FROM voices WHERE petition_id = petitions.id) AS voices_count
         FROM petitions
+        GROUP BY petitions.id
         OFFSET 0
         LIMIT 5
     `
 
 	var outRecords []V1Records.Petitions
 	err = p.conn.SelectContext(ctx, &outRecords, query)
+
+	outDomains = V1Records.ToArrayOfPetitionsV1Domain(&outRecords)
 	if err != nil {
-		return nil, err
+		return outDomains, err
 	}
 
-	return V1Records.ToArrayOfPetitionsV1Domain(&outRecords), nil
+	logger.Info("outDomains: ", logrus.Fields{"outDomains": outDomains})
+	return outDomains, nil
 }
 
 func NewPetitionRepository(conn *sqlx.DB) V1Domains.PetitionRepository {

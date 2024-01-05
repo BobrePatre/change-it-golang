@@ -3,9 +3,11 @@ package v1
 import (
 	V1Domains "change-it/internal/business/domains/v1"
 	V1DomainErrors "change-it/internal/business/errors/v1"
+	V1DatasourceErrors "change-it/internal/datasources/errors/v1"
 	"context"
 	"errors"
 	"github.com/google/uuid"
+	"github.com/snykk/go-rest-boilerplate/pkg/logger"
 )
 
 type petitionUsecase struct {
@@ -29,14 +31,16 @@ func (p *petitionUsecase) Delete(ctx context.Context, id string, userId string) 
 
 	// switch case style
 	if err != nil {
-		var nferr *V1DomainErrors.NotFoundError
+		var nferr *V1DatasourceErrors.NotFoundError
 		switch {
 		case errors.As(err, &nferr):
+			logger.Info("petition not found error", nil)
 			return &V1DomainErrors.NotFoundError{
 				Message:    "petition not found",
 				StatusCode: 409,
 			}
 		default:
+			logger.Info("unknown error", nil)
 			return err
 		}
 	}
@@ -69,7 +73,6 @@ func (p *petitionUsecase) Like(ctx context.Context, id string, userId string) (e
 func (p *petitionUsecase) Voice(ctx context.Context, id string, userId string) (err error) {
 	_, err = p.petitionRepository.GetByID(ctx, id)
 
-	userId = uuid.New().String()
 	if err != nil {
 		var nferr *V1DomainErrors.NotFoundError
 		if errors.As(err, &nferr) {

@@ -3,7 +3,6 @@ package validators
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -16,37 +15,15 @@ var mapHelepr = map[string]string{
 	"lowercase": "must contain at least one lowercase letter",
 	"uppercase": "must contain at least one uppercase letter",
 	"numeric":   "must contain at least one digit",
+	"uuid4":     "must be a valid UUID",
 }
 
 var needParam = []string{"min", "max", "containsany"}
 
-func ValidateParam(param any, tags ...string) (err error) {
-	validate := validator.New()
-	err = validate.RegisterValidation("uuid", validUuid)
-	if err != nil {
-		return err
-	}
-	var message string
-	for _, tag := range tags {
-		err = validate.Var(param, tag)
-		if err != nil {
-			if helpers.IsArrayContains(needParam, tag) {
-				message = errWithParam()
-			}
-			return errors.New(err.Error()
-		}
-	}
-}
-
-
 func ValidatePayloads(payload interface{}) (err error) {
 	validate := validator.New()
-	err = validate.RegisterValidation("uuid", validUuid)
-	if err != nil {
-		return err
-	}
-
 	var field, param, value, tag, message string
+
 	err = validate.Struct(payload)
 	if err != nil {
 		fmt.Println(err.(validator.ValidationErrors))
@@ -85,10 +62,4 @@ func errWithParam(field, value, tag, param string) string {
 	}
 
 	return fmt.Sprintf("%s: '%s' %s", field, value, message)
-}
-
-func validUuid(fl validator.FieldLevel) bool {
-	pattern := `(?i)^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`
-	re := regexp.MustCompile(pattern)
-	return re.MatchString(fl.Field().String())
 }

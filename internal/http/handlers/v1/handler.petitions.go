@@ -24,12 +24,7 @@ func NewPetitionsHandler(usecase V1Domains.PetitionUseсase) PetitionsHandler {
 
 func (h *PetitionsHandler) CreatePetition(ctx *gin.Context) {
 
-	var id string
-	if err := ctx.ShouldBindHeader(&id); err != nil {
-
-	}
-
-	var request V1Requests.PetitionRequest
+	var request V1Requests.CreatePetition
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
@@ -60,19 +55,23 @@ func (h *PetitionsHandler) GetAllPetitions(ctx *gin.Context) {
 }
 
 func (h *PetitionsHandler) Delete(ctx *gin.Context) {
-	id := ctx.Param("id")
-	if id == "" {
-		NewErrorResponse(ctx, http.StatusBadRequest, "invalid id")
+	var request V1Requests.Id
+
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if err := validators.
+	if err := validators.ValidatePayloads(request); err != nil {
+		NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
 
-	err := h.usecase.Delete(ctx, id, uuid.New().String())
+	err := h.usecase.Delete(ctx, request.ID, uuid.New().String())
 	if err != nil {
 		var nferr *V1DomainErrors.NotFoundError
-		if errors.Is(err, nferr) {
-			NewErrorResponse(ctx, nferr.StatusCode, err.Error())
+		if errors.As(err, &nferr) {
+			NewErrorResponse(ctx, 409, err.Error()+string(rune(nferr.StatusCode)))
 			return
 		}
 		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
@@ -83,16 +82,21 @@ func (h *PetitionsHandler) Delete(ctx *gin.Context) {
 
 func (h *PetitionsHandler) LikePetition(ctx *gin.Context) {
 
-	id := ctx.Param("id")
-	if id == "" {
-		NewErrorResponse(ctx, http.StatusBadRequest, "invalid id")
+	var request V1Requests.Id
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err := h.usecase.Like(ctx, id, uuid.New().String())
+	if err := validators.ValidatePayloads(request); err != nil {
+		NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err := h.usecase.Like(ctx, request.ID, uuid.New().String())
 	if err != nil {
 		var nferr *V1DomainErrors.NotFoundError
-		if errors.Is(err, nferr) {
+		if errors.As(err, &nferr) {
 			NewErrorResponse(ctx, nferr.StatusCode, err.Error())
 			return
 		}
@@ -103,6 +107,26 @@ func (h *PetitionsHandler) LikePetition(ctx *gin.Context) {
 }
 
 func (h *PetitionsHandler) VoicePetition(ctx *gin.Context) {
-	// TODO: implement
-	panic("implement me")
+	var request V1Requests.Id
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := validators.ValidatePayloads(request); err != nil {
+		NewErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err := h.usecase.Voice(ctx, request.ID, uuid.New().String())
+	if err != nil {
+		var nferr *V1DomainErrors.NotFoundError
+		if errors.As(err, &nferr) {
+			NewErrorResponse(ctx, nferr.StatusCode, err.Error())
+			return
+		}
+		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+	NewSuccessResponse(ctx, http.StatusOK)
 }

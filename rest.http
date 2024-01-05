@@ -1,19 +1,22 @@
-###
-POST http://localhost:2000/api/v1/petitions
-Content-Type: application/json
 
-{
-  "title": "hello world!",
-  "description": "i like golang!!"
-}
 
 
 
 ###
 GET http://localhost:2000/api/v1/petitions
 
+###
+POST http://localhost:2000/api/v1/petitions
+Content-Type: application/json
 
+{
+  "title": "Gosha Gusev!",
+  "description": "i love my Mom!"
+}
 
 ###
-POST http://localhost:2000/api/v1/petitions//like
+POST http://localhost:2000/api/v1/petitions/346a9e74-f3af-493b-b845-b0514789991b/like
+
+###
+POST http://localhost:2000/api/v1/petitions/346a9e74-f3af-493b-b845-b0514789991b/voice
 
