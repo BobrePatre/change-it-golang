@@ -4,7 +4,7 @@ import (
 	"change-it/internal/config"
 	"change-it/internal/constants"
 	"change-it/internal/http/middlewares"
-	"change-it/internal/http/routes/v1"
+	V1Routes "change-it/internal/http/routes/v1"
 	"change-it/internal/utils"
 	"context"
 	"errors"
@@ -37,9 +37,8 @@ func NewApp() (*App, error) {
 	router := setupRouter()
 
 	// API Routes
-	api := router.Group("api")
-	api.GET("/", v1.RootHandler)
-	v1.NewPetitionRoute(api, conn).RegisterRoutes()
+	api := router.Group(constants.EndpointV1)
+	V1Routes.NewPetitionRoute(api, conn).RegisterRoutes()
 
 	// we can add web pages if needed
 	// web := router.Group("web")

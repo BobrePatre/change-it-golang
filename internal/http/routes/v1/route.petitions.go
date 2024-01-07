@@ -26,7 +26,7 @@ func NewPetitionRoute(router *gin.RouterGroup, db *sqlx.DB) *PetitionsRoutes {
 }
 
 func (r *PetitionsRoutes) RegisterRoutes() {
-	V1Route := r.router.Group("/v1")
+	V1Route := r.router.Group("/petitions")
 	{
 
 		V1PetitionRoute := V1Route.Group("/petitions")
