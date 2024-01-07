@@ -16,7 +16,7 @@ type Config struct {
 	DBPostgreDsn    string `mapstructure:"DB_POSTGRE_DSN"`
 	DBPostgreURL    string `mapstructure:"DB_POSTGRE_URL"`
 
-	AUTHJwkSecretUri string `mapstructure:"AUTH_JWK_SECRET_URI"`
+	AUTHJwkPublicUri string `mapstructure:"AUTH_JWK_SECRET_URI"`
 	AUTHRealm        string `mapstructure:"AUTH_REALM"`
 	AUTHClient       string `mapstructure:"AUTH_CLIENT"`
 }

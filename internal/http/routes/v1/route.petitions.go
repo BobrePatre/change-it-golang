@@ -2,6 +2,7 @@ package v1
 
 import (
 	V1Usecase "change-it/internal/business/usecases/v1"
+	"change-it/internal/config"
 	V1PostgresRepository "change-it/internal/datasources/repositories/postgres/v1"
 	V1Handler "change-it/internal/http/handlers/v1"
 	V1Handlers "change-it/internal/http/handlers/v1"
@@ -30,7 +31,7 @@ func (r *PetitionsRoutes) RegisterRoutes() {
 
 		V1PetitionRoute := V1Route.Group("/petitions")
 		V1PetitionRoute.POST("/", r.V1Handler.CreatePetition)
-		V1PetitionRoute.GET("/", middlewares.AuthMiddleware("user"), r.V1Handler.GetAllPetitions)
+		V1PetitionRoute.GET("/", middlewares.TokenAuthMiddleware(config.AppConfig.AUTHJwkPublicUri), r.V1Handler.GetAllPetitions)
 		V1PetitionRoute.DELETE("/:id", r.V1Handler.Delete)
 		V1PetitionRoute.POST("/:id/like", r.V1Handler.LikePetition)
 		V1PetitionRoute.POST("/:id/voice", r.V1Handler.VoicePetition)

@@ -101,7 +101,6 @@ func setupRouter() *gin.Engine {
 	router := gin.New()
 
 	// set up middlewares
-	middlewares.InitializeAuthMiddleware()
 	router.Use(middlewares.CORSMiddleware())
 	router.Use(gin.LoggerWithFormatter(logger.HTTPLogger))
 	router.Use(gin.Recovery())

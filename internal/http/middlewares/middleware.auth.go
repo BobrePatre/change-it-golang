@@ -1,101 +1,72 @@
 package middlewares
 
 import (
-	"change-it/internal/config"
-	JwtHelpers "change-it/pkg/jwt"
 	"change-it/pkg/logger"
-	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"log"
-	"net/http"
-	"strings"
-	"time"
-
 	"github.com/golang-jwt/jwt"
-
-	"github.com/MicahParks/keyfunc"
+	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/sirupsen/logrus"
+	"net/http"
 )
 
-// TODO: сделать нормально
+// TokenAuthMiddleware Middleware to validate JWT tokens
+func TokenAuthMiddleware(jwksUrl string) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
 
-func AuthMiddleware(roles ...string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.Request.Header.Get("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header not found"})
+		tokenString := ctx.GetHeader("Authorization")
+
+		// Fetch JWKs from Keycloak
+		set, err := jwk.Fetch(ctx, jwksUrl)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to fetch JWKs"})
+			ctx.Abort()
 			return
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Parse the token
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (rawKey interface{}, err error) {
+			// Don't forget to validate the alg is what you expect
 			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+				err = fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			return cert, nil
+
+			keyID, ok := token.Header["kid"].(string)
+			if !ok {
+				err = fmt.Errorf("expecting JWT header to have string 'kid'")
+				return nil, err
+			}
+
+			key, found := set.LookupKeyID(keyID)
+			if !found {
+				err = fmt.Errorf("unable to find key")
+				return nil, err
+			}
+
+			err = key.Raw(&rawKey)
+
+			return rawKey, nil
 		})
 
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token", "error": err.Error()})
+			ctx.Abort()
 			return
 		}
 
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			// Token is valid
+			logger.Info("calims", logrus.Fields{"claims": claims})
+			ctx.Set("claims", claims)
+		} else {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+			ctx.Abort()
 			return
 		}
 
-		userRoles, ok := claims["resource_access"].(jwt.MapClaims)[config.AppConfig.AUTHClient].(jwt.MapClaims)["roles"].([]string)
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
-			return
-		}
-
-		if len(roles) > 0 && !JwtHelpers.ContainsRole(userRoles, roles) {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
-			return
-		}
-
-		c.Keys["userRoles"] = userRoles
-		c.Next()
+		ctx.Next()
 	}
 }
 
-func verify(ctx context.Context, jwtToken string, jwksUrl string) (*jwt.Token, error) {
-	// Create the JWKS from the resource at the given URL.
-
-	options := keyfunc.Options{
-		Ctx: ctx,
-		RefreshErrorHandler: func(err error) {
-			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
-		},
-		RefreshInterval:   time.Hour,
-		RefreshRateLimit:  time.Minute * 5,
-		RefreshTimeout:    time.Second * 10,
-		RefreshUnknownKID: true,
-	}
-	jwks, err := keyfunc.Get(jwksUrl, options)
-	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
-	}
-
-	// Parse the JWT.
-	token, err := jwt.Parse(jwtToken, jwks.Keyfunc)
-	if err != nil {
-		logger.Fatal("Failed to parse the JWT.\nError: %s", err.Error())
-	}
-
-	// Check if the token is valid.
-	if !token.Valid {
-		log.Fatalf("The token is not valid.")
-	}
-	log.Println("The token is valid.")
-
-	// End the background refresh goroutine when it's no longer needed.
-	cancel()
-
-	// This will be ineffectual because the line above this canceled the parent context.Context.
-	// This method call is idempotent similar to context.CancelFunc.
-	jwks.EndBackground()
-}
+// TODO: доделать
