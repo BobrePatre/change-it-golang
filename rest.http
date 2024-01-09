@@ -4,21 +4,25 @@
 
 ###
 GET http://localhost:2000/api/v1/petitions
-Authorization: eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJuRUtzZGtFNXdFVE92aVZEQ0g5d2VXZ0tVWTdySkYtZTh2TVYwMWR5dWxBIn0.eyJleHAiOjE3MDQ0OTAwMjQsImlhdCI6MTcwNDQ4OTcyNCwiYXV0aF90aW1lIjoxNzA0NDg5NzIzLCJqdGkiOiJhNWQyZTA3NS1lZmU1LTQzYTUtOTI5NC01N2NjYTc5NjA2ZGYiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODEvcmVhbG1zL25vcm1hIiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjkxYmYxM2U2LWQ5MDAtNDVmZS1iMjgzLTEzMDU0N2QzZWU0ZiIsInR5cCI6IkJlYXJlciIsImF6cCI6Im5vcm1hLWNsaWVudCIsInNlc3Npb25fc3RhdGUiOiIwMmQyY2NkZS01N2U0LTQ1MGYtODhmMC04MGJmZjI2MTRlM2IiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIioiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtbm9ybWEiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsibm9ybWEtY2xpZW50Ijp7InJvbGVzIjpbImFkbWluIiwidXNlciJdfSwiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInNpZCI6IjAyZDJjY2RlLTU3ZTQtNDUwZi04OGYwLTgwYmZmMjYxNGUzYiIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwibmFtZSI6InNtcHJvZCBzbXByb2RvdmljaCIsInByZWZlcnJlZF91c2VybmFtZSI6InNtcHJvZCIsImdpdmVuX25hbWUiOiJzbXByb2QiLCJmYW1pbHlfbmFtZSI6InNtcHJvZG92aWNoIiwiZW1haWwiOiJzbXByb2Q3QGdtYWlsLmNvbSJ9.bVmykXEUlGt4HLtjC3Wi2psay792wWzAZ73znZBn8Xr3_RsLa77JoOs7lDte5jDwC6xQnhsgEEov7gbWd5O1DGEZEs50SevMrlQ_XpKWFIR1RItucsu7aUlWaZABUBU8xVTeWGcRZJ60IsITuVNe1LO_AsDZxdbuqI0ypfnmsTvPMWU7dRORcoTGgdLZhxlLvB3ebQ5BtBH0br_Z9PkvARxUUC4qF2Mywv2LnmZsLIg74gG3q6isyItazv70FlQ7K6J1kKwc1Tm5y7pU1lUw2EgSg13R1j9-f7ytjPnLFi64Xnn8PrHyKbh9eg2L55eqfwDpTGXu3RC51ICJyuoIwQ
+Authorization: Bearer {{$auth.token("access-token")}}
+
 
 
 ###
 POST http://localhost:2000/api/v1/petitions
 Content-Type: application/json
+Authorization: Bearer {{$auth.token("access-token")}}
 
 {
-  "title": "Gosha Gusev!",
-  "description": "i love my Mom!"
+  "title": "balada",
+  "description": "xuilo"
 }
 
 ###
-POST http://localhost:2000/api/v1/petitions/346a9e74-f3af-493b-b845-b0514789991b/like
+POST http://localhost:2000/api/v1/petitions/9f416181-05c3-4e71-9a68-06b98b69647d/like
+Authorization: Bearer {{$auth.token("access-token")}}
 
 ###
-POST http://localhost:2000/api/v1/petitions/346a9e74-f3af-493b-b845-b0514789991b/voice
+POST http://localhost:2000/api/v1/petitions/9f416181-05c3-4e71-9a68-06b98b69647d/voice
+Authorization: Bearer {{$auth.token("access-token")}}
 

@@ -2,7 +2,6 @@ package v1
 
 import (
 	V1Usecase "change-it/internal/business/usecases/v1"
-	"change-it/internal/config"
 	V1PostgresRepository "change-it/internal/datasources/repositories/postgres/v1"
 	V1Handler "change-it/internal/http/handlers/v1"
 	V1Handlers "change-it/internal/http/handlers/v1"
@@ -19,22 +18,21 @@ type PetitionsRoutes struct {
 
 func NewPetitionRoute(router *gin.RouterGroup, db *sqlx.DB) *PetitionsRoutes {
 	V1PetitionRepository := V1PostgresRepository.NewPetitionRepository(db)
-	V1PetitionUsecase := V1Usecase.NewPetitionUsecase(V1PetitionRepository)
+	V1UserRepository := V1PostgresRepository.NewUserRepository(db)
+	V1PetitionUsecase := V1Usecase.NewPetitionUsecase(V1PetitionRepository, V1UserRepository)
 	V1PetitionHandler := V1Handler.NewPetitionsHandler(V1PetitionUsecase)
 
 	return &PetitionsRoutes{V1Handler: V1PetitionHandler, router: router, db: db}
 }
 
 func (r *PetitionsRoutes) RegisterRoutes() {
-	V1Route := r.router.Group("/petitions")
+	V1PetitionRoute := r.router.Group("/petitions")
 	{
-
-		V1PetitionRoute := V1Route.Group("/petitions")
-		V1PetitionRoute.POST("/", r.V1Handler.CreatePetition)
-		V1PetitionRoute.GET("/", middlewares.TokenAuthMiddleware(config.AppConfig.AUTHJwkPublicUri), r.V1Handler.GetAllPetitions)
-		V1PetitionRoute.DELETE("/:id", r.V1Handler.Delete)
-		V1PetitionRoute.POST("/:id/like", r.V1Handler.LikePetition)
-		V1PetitionRoute.POST("/:id/voice", r.V1Handler.VoicePetition)
-
+		V1PetitionRoute.GET("/", r.V1Handler.GetAllPetitions)
+		V1PetitionRoute.POST("/", middlewares.KycloakAuthMiddleware(), r.V1Handler.CreatePetition)
+		V1PetitionRoute.POST("/:id/like", middlewares.KycloakAuthMiddleware(), r.V1Handler.LikePetition)
+		V1PetitionRoute.POST("/:id/voice", middlewares.KycloakAuthMiddleware(), r.V1Handler.VoicePetition)
+		V1PetitionRoute.DELETE("/:id", middlewares.KycloakAuthMiddleware(), r.V1Handler.Delete)
 	}
+
 }

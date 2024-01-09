@@ -106,7 +106,6 @@ func (p *postgrePetitonRepository) GetAll(ctx context.Context) (outDomains []*V1
 		return outDomains, err
 	}
 
-	logger.Info("outDomains: ", logrus.Fields{"outDomains": outDomains})
 	return outDomains, nil
 }
 

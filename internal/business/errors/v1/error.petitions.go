@@ -20,3 +20,15 @@ type NotFoundError DomainError
 func (e *NotFoundError) Error() string {
 	return prefix + e.Message
 }
+
+type AlreadyLikedError DomainError
+
+func (e *AlreadyLikedError) Error() string {
+	return prefix + e.Message
+}
+
+type AlreadyVoicedError DomainError
+
+func (e *AlreadyVoicedError) Error() string {
+	return prefix + e.Message
+}

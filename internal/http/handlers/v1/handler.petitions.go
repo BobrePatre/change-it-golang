@@ -8,7 +8,6 @@ import (
 	"change-it/pkg/validators"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"net/http"
 )
 
@@ -36,6 +35,7 @@ func (h *PetitionsHandler) CreatePetition(ctx *gin.Context) {
 	}
 
 	petitionDomain := request.ToV1Domain()
+	petitionDomain.OwnerID = ctx.Value("userDetails").(V1Domains.UserDetails).UserId
 	err := h.usecase.Save(ctx, petitionDomain)
 	if err != nil {
 		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
@@ -67,11 +67,12 @@ func (h *PetitionsHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	err := h.usecase.Delete(ctx, request.ID, uuid.New().String())
+	userId := ctx.Value("userDetails").(V1Domains.UserDetails).UserId
+	err := h.usecase.Delete(ctx, request.ID, userId)
 	if err != nil {
 		var nferr *V1DomainErrors.NotFoundError
 		if errors.As(err, &nferr) {
-			NewErrorResponse(ctx, 409, err.Error()+string(rune(nferr.StatusCode)))
+			NewErrorResponse(ctx, nferr.StatusCode, nferr.Error())
 			return
 		}
 		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
@@ -93,15 +94,23 @@ func (h *PetitionsHandler) LikePetition(ctx *gin.Context) {
 		return
 	}
 
-	err := h.usecase.Like(ctx, request.ID, uuid.New().String())
+	userId := ctx.Value("userDetails").(V1Domains.UserDetails).UserId
+	err := h.usecase.Like(ctx, request.ID, userId)
 	if err != nil {
 		var nferr *V1DomainErrors.NotFoundError
-		if errors.As(err, &nferr) {
-			NewErrorResponse(ctx, nferr.StatusCode, err.Error())
+		var aerr *V1DomainErrors.AlreadyLikedError
+		switch {
+		case errors.As(err, &nferr):
+			NewErrorResponse(ctx, nferr.StatusCode, nferr.Error())
+			return
+		case errors.As(err, &aerr):
+			NewErrorResponse(ctx, aerr.StatusCode, aerr.Error())
+			return
+		default:
+			NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 			return
 		}
-		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
-		return
+
 	}
 	NewSuccessResponse(ctx, http.StatusOK)
 }
@@ -118,15 +127,23 @@ func (h *PetitionsHandler) VoicePetition(ctx *gin.Context) {
 		return
 	}
 
-	err := h.usecase.Voice(ctx, request.ID, uuid.New().String())
+	userId := ctx.Value("userDetails").(V1Domains.UserDetails).UserId
+	err := h.usecase.Voice(ctx, request.ID, userId)
 	if err != nil {
 		var nferr *V1DomainErrors.NotFoundError
-		if errors.As(err, &nferr) {
-			NewErrorResponse(ctx, nferr.StatusCode, err.Error())
+		var aerr *V1DomainErrors.AlreadyVoicedError
+		switch {
+		case errors.As(err, &nferr):
+			NewErrorResponse(ctx, nferr.StatusCode, nferr.Error())
+			return
+		case errors.As(err, &aerr):
+			NewErrorResponse(ctx, aerr.StatusCode, aerr.Error())
+			return
+		default:
+			NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 			return
 		}
-		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
-		return
 	}
+
 	NewSuccessResponse(ctx, http.StatusOK)
 }

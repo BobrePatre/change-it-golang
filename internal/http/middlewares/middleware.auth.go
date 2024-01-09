@@ -1,18 +1,22 @@
 package middlewares
 
 import (
+	V1Domains "change-it/internal/business/domains/v1"
 	"change-it/internal/config"
 	"change-it/pkg/helpers"
+	"change-it/pkg/logger"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 )
 
-func AuthMiddleware(roles ...string) gin.HandlerFunc {
+func KycloakAuthMiddleware(roles ...string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		authHeader := ctx.GetHeader("Authorization")
@@ -23,13 +27,8 @@ func AuthMiddleware(roles ...string) gin.HandlerFunc {
 			return
 		}
 
-		if len(strings.Split(authHeader, " ")) != 2 {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
-			ctx.Abort()
-			return
-		}
-
-		if strings.Split(authHeader, " ")[0] != "Bearer" {
+		if headerArr := strings.Split(authHeader, " "); len(headerArr) != 2 || headerArr[0] != "Bearer" {
+			logger.Error("Invalid token format", nil)
 			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
 			ctx.Abort()
 			return
@@ -38,37 +37,66 @@ func AuthMiddleware(roles ...string) gin.HandlerFunc {
 		token, err := verifyToken(ctx, strings.Split(authHeader, " ")[1])
 
 		if err != nil {
+			logger.Error("cannot verify token", logrus.Fields{"err": err.Error()})
 			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
 			ctx.Abort()
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
-		if ok && token.Valid {
-			ctx.Set("claims", claims)
-		} else {
+		if !(ok && token.Valid) {
+			logger.Error("cannot get claims", logrus.Fields{"err": err.Error()})
 			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
 			ctx.Abort()
 			return
 		}
 
-		userRoles, ok := claims["resource_access"].(map[string]interface{})[config.AppConfig.AUTHClient].(map[string]interface{})["roles"].([]string)
-		if !ok {
+		if claims["sub"] == "" || claims["sub"] == nil {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
 			ctx.Abort()
 			return
 		}
 
-		for _, role := range roles {
-			if helpers.IsArrayContains(userRoles, role) {
-				ctx.Next()
-				return
+		var userRoles []string
+		if resourceAccess, ok := claims["resource_access"].(map[string]interface{}); ok {
+			if authClient, ok := resourceAccess[config.AppConfig.AUTHClient].(map[string]interface{}); ok {
+				if err := mapstructure.Decode(authClient["roles"], &userRoles); err != nil {
+					logger.Error("cannot get user roles", logrus.Fields{"err": err.Error()})
+					userRoles = []string{}
+				}
 			}
 		}
 
-		ctx.Status(http.StatusForbidden)
-		ctx.Abort()
+		logger.Error("userId", logrus.Fields{"userId": claims["sub"]})
+
+		ctx.Set("userDetails", V1Domains.UserDetails{
+			Roles:    userRoles,
+			UserId:   claims["sub"].(string),
+			Email:    claims["email"].(string),
+			Username: claims["name"].(string),
+		})
+
+		if len(roles) == 0 {
+			ctx.Next()
+			return
+		}
+
+		if !isUserHaveRoles(roles, userRoles) {
+			ctx.Status(http.StatusForbidden)
+			ctx.Abort()
+		}
+
+		ctx.Next()
 	}
+}
+
+func isUserHaveRoles(roles []string, userRoles []string) bool {
+	for _, role := range roles {
+		if helpers.IsArrayContains(userRoles, role) {
+			return true
+		}
+	}
+	return false
 }
 
 func verifyToken(ctx context.Context, tokenString string) (token *jwt.Token, err error) {
@@ -77,7 +105,6 @@ func verifyToken(ctx context.Context, tokenString string) (token *jwt.Token, err
 		return nil, err
 	}
 
-	// Parse the token
 	token, err = jwt.Parse(tokenString, func(token *jwt.Token) (rawKey interface{}, err error) {
 
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {

@@ -6,18 +6,17 @@ import (
 	V1DatasourceErrors "change-it/internal/datasources/errors/v1"
 	"context"
 	"errors"
-	"github.com/google/uuid"
 	"github.com/snykk/go-rest-boilerplate/pkg/logger"
 )
 
 type petitionUsecase struct {
 	petitionRepository V1Domains.PetitionRepository
+	userRepository     V1Domains.UserRepository
 }
 
 func (p *petitionUsecase) Save(ctx context.Context, domain *V1Domains.PetitionDomain) (err error) {
 	_, err = p.petitionRepository.GetByID(ctx, domain.ID)
 
-	domain.OwnerID = uuid.New().String()
 	if err != nil {
 		return p.petitionRepository.Create(ctx, domain)
 	}
@@ -67,7 +66,21 @@ func (p *petitionUsecase) Like(ctx context.Context, id string, userId string) (e
 		return err
 	}
 
-	return p.petitionRepository.Like(ctx, id, uuid.New().String())
+	likedPetitions, err := p.userRepository.GetLikedPetitions(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	for _, petition := range likedPetitions {
+		if petition.ID == id {
+			return &V1DomainErrors.AlreadyLikedError{
+				Message:    "petition already liked",
+				StatusCode: 409,
+			}
+		}
+	}
+
+	return p.petitionRepository.Like(ctx, id, userId)
 }
 
 func (p *petitionUsecase) Voice(ctx context.Context, id string, userId string) (err error) {
@@ -84,6 +97,20 @@ func (p *petitionUsecase) Voice(ctx context.Context, id string, userId string) (
 		return err
 	}
 
+	voicedPetitions, err := p.userRepository.GetVoicedPetitions(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	for _, petition := range voicedPetitions {
+		if petition.ID == id {
+			return &V1DomainErrors.AlreadyVoicedError{
+				Message:    "petition already voiced",
+				StatusCode: 409,
+			}
+		}
+	}
+
 	return p.petitionRepository.Voice(ctx, id, userId)
 }
 
@@ -91,8 +118,9 @@ func (p *petitionUsecase) GetAll(ctx context.Context) ([]*V1Domains.PetitionDoma
 	return p.petitionRepository.GetAll(ctx)
 }
 
-func NewPetitionUsecase(petitionRepository V1Domains.PetitionRepository) V1Domains.PetitionUseсase {
+func NewPetitionUsecase(petitionRepository V1Domains.PetitionRepository, userRepository V1Domains.UserRepository) V1Domains.PetitionUseсase {
 	return &petitionUsecase{
 		petitionRepository: petitionRepository,
+		userRepository:     userRepository,
 	}
 }
