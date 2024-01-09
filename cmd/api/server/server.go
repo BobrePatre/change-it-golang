@@ -6,6 +6,7 @@ import (
 	"change-it/internal/http/middlewares"
 	V1Routes "change-it/internal/http/routes/v1"
 	"change-it/internal/utils"
+	"change-it/pkg/logger"
 	"context"
 	"errors"
 	"fmt"
@@ -18,8 +19,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-
-	"github.com/snykk/go-rest-boilerplate/pkg/logger"
 )
 
 type App struct {
@@ -40,17 +39,13 @@ func NewApp() (*App, error) {
 	api := router.Group(constants.EndpointV1)
 	V1Routes.NewPetitionRoute(api, conn).RegisterRoutes()
 
-	// we can add web pages if needed
-	// web := router.Group("web")
-	// ...
-
 	// setup http server
 	server := &http.Server{
 		Addr:           fmt.Sprintf(":%d", config.AppConfig.Port),
 		Handler:        router,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20,
+		MaxHeaderBytes: 104857600,
 	}
 
 	return &App{

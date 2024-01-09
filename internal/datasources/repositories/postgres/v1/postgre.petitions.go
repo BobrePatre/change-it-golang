@@ -4,10 +4,8 @@ import (
 	V1Domains "change-it/internal/business/domains/v1"
 	V1DatasourceErrors "change-it/internal/datasources/errors/v1"
 	V1Records "change-it/internal/datasources/records/v1"
-	"change-it/pkg/logger"
 	"context"
 	"github.com/jmoiron/sqlx"
-	"github.com/sirupsen/logrus"
 )
 
 type postgrePetitonRepository struct {
@@ -51,7 +49,6 @@ func (p *postgrePetitonRepository) Like(ctx context.Context, id string, userId s
 
 	_, err = p.conn.NamedQueryContext(ctx, "INSERT INTO likes (user_id, petition_id) VALUES (:user_id, :petition_id)", like)
 	if err != nil {
-		logger.Error(err.Error(), logrus.Fields{"userId": userId, "petitionId": id})
 		return err
 	}
 	return nil
@@ -76,10 +73,8 @@ func (p *postgrePetitonRepository) GetByID(ctx context.Context, id string) (outD
        FROM petitions 
        WHERE petitions.id = $1 GROUP BY petitions.id
    `
-	logger.Info("Executing query with id", logrus.Fields{"id": id})
 	err = p.conn.GetContext(ctx, &petitionRecord, query, id)
 	if err != nil {
-		logger.Error("Failed to execute query", logrus.Fields{"error": err.Error()})
 		return nil, &V1DatasourceErrors.NotFoundError{Message: err.Error()}
 	}
 
@@ -94,8 +89,10 @@ func (p *postgrePetitonRepository) GetAll(ctx context.Context) (outDomains []*V1
             (SELECT COUNT(*) FROM voices WHERE petition_id = petitions.id) AS voices_count
         FROM petitions
         GROUP BY petitions.id
+        ORDER BY MAX(created_at) DESC
         OFFSET 0
         LIMIT 5
+        
     `
 
 	var outRecords []V1Records.Petitions

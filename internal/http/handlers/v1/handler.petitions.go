@@ -37,6 +37,7 @@ func (h *PetitionsHandler) CreatePetition(ctx *gin.Context) {
 	petitionDomain := request.ToV1Domain()
 	petitionDomain.OwnerID = ctx.Value("userDetails").(V1Domains.UserDetails).UserId
 	err := h.usecase.Save(ctx, petitionDomain)
+
 	if err != nil {
 		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 	}
@@ -67,16 +68,23 @@ func (h *PetitionsHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	userId := ctx.Value("userDetails").(V1Domains.UserDetails).UserId
-	err := h.usecase.Delete(ctx, request.ID, userId)
+	userDetails := ctx.Value("userDetails").(V1Domains.UserDetails)
+	err := h.usecase.Delete(ctx, request.ID, userDetails.UserId, userDetails.Roles)
 	if err != nil {
 		var nferr *V1DomainErrors.NotFoundError
-		if errors.As(err, &nferr) {
-			NewErrorResponse(ctx, nferr.StatusCode, nferr.Error())
+		var ferr *V1DomainErrors.ForbiddenError
+		switch {
+		case errors.As(err, &nferr):
+			NewErrorResponse(ctx, nferr.StatusCode, nferr.Message)
+			return
+		case errors.As(err, &ferr):
+			NewErrorResponse(ctx, ferr.StatusCode, ferr.Message)
+			return
+		default:
+			NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 			return
 		}
-		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
-		return
+
 	}
 	NewSuccessResponse(ctx, http.StatusOK)
 }
@@ -101,10 +109,10 @@ func (h *PetitionsHandler) LikePetition(ctx *gin.Context) {
 		var aerr *V1DomainErrors.AlreadyLikedError
 		switch {
 		case errors.As(err, &nferr):
-			NewErrorResponse(ctx, nferr.StatusCode, nferr.Error())
+			NewErrorResponse(ctx, nferr.StatusCode, nferr.Message)
 			return
 		case errors.As(err, &aerr):
-			NewErrorResponse(ctx, aerr.StatusCode, aerr.Error())
+			NewErrorResponse(ctx, aerr.StatusCode, aerr.Message)
 			return
 		default:
 			NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
@@ -134,10 +142,10 @@ func (h *PetitionsHandler) VoicePetition(ctx *gin.Context) {
 		var aerr *V1DomainErrors.AlreadyVoicedError
 		switch {
 		case errors.As(err, &nferr):
-			NewErrorResponse(ctx, nferr.StatusCode, nferr.Error())
+			NewErrorResponse(ctx, nferr.StatusCode, nferr.Message)
 			return
 		case errors.As(err, &aerr):
-			NewErrorResponse(ctx, aerr.StatusCode, aerr.Error())
+			NewErrorResponse(ctx, aerr.StatusCode, aerr.Message)
 			return
 		default:
 			NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())

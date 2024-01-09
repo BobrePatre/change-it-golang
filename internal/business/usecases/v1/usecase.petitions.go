@@ -4,6 +4,7 @@ import (
 	V1Domains "change-it/internal/business/domains/v1"
 	V1DomainErrors "change-it/internal/business/errors/v1"
 	V1DatasourceErrors "change-it/internal/datasources/errors/v1"
+	"change-it/pkg/helpers"
 	"context"
 	"errors"
 	"github.com/snykk/go-rest-boilerplate/pkg/logger"
@@ -24,7 +25,7 @@ func (p *petitionUsecase) Save(ctx context.Context, domain *V1Domains.PetitionDo
 	return p.petitionRepository.Update(ctx, domain)
 }
 
-func (p *petitionUsecase) Delete(ctx context.Context, id string, userId string) (err error) {
+func (p *petitionUsecase) Delete(ctx context.Context, id string, userId string, userRoles []string) (err error) {
 
 	domain, err := p.petitionRepository.GetByID(ctx, id)
 
@@ -44,11 +45,18 @@ func (p *petitionUsecase) Delete(ctx context.Context, id string, userId string) 
 		}
 	}
 
-	if userId != domain.OwnerID {
+	if userId == domain.OwnerID {
 		return p.petitionRepository.Delete(ctx, id)
 	}
 
-	return p.petitionRepository.Delete(ctx, id)
+	if helpers.IsArrayContains(userRoles, "admin") {
+		return p.petitionRepository.Delete(ctx, id)
+	}
+
+	return &V1DomainErrors.ForbiddenError{
+		Message:    "User cannot delete this petition",
+		StatusCode: 403,
+	}
 }
 
 func (p *petitionUsecase) Like(ctx context.Context, id string, userId string) (err error) {
@@ -56,7 +64,7 @@ func (p *petitionUsecase) Like(ctx context.Context, id string, userId string) (e
 
 	// if style
 	if err != nil {
-		var nferr *V1DomainErrors.NotFoundError
+		var nferr *V1DatasourceErrors.NotFoundError
 		if errors.As(err, &nferr) {
 			return &V1DomainErrors.NotFoundError{
 				Message:    "petition not found",
@@ -66,17 +74,15 @@ func (p *petitionUsecase) Like(ctx context.Context, id string, userId string) (e
 		return err
 	}
 
-	likedPetitions, err := p.userRepository.GetLikedPetitions(ctx, userId)
+	isUserLiked, err := p.userRepository.IsUserLikedPetition(ctx, userId, id)
 	if err != nil {
 		return err
 	}
 
-	for _, petition := range likedPetitions {
-		if petition.ID == id {
-			return &V1DomainErrors.AlreadyLikedError{
-				Message:    "petition already liked",
-				StatusCode: 409,
-			}
+	if isUserLiked {
+		return &V1DomainErrors.AlreadyLikedError{
+			Message:    "petition already liked",
+			StatusCode: 409,
 		}
 	}
 
@@ -87,7 +93,7 @@ func (p *petitionUsecase) Voice(ctx context.Context, id string, userId string) (
 	_, err = p.petitionRepository.GetByID(ctx, id)
 
 	if err != nil {
-		var nferr *V1DomainErrors.NotFoundError
+		var nferr *V1DatasourceErrors.NotFoundError
 		if errors.As(err, &nferr) {
 			return &V1DomainErrors.NotFoundError{
 				Message:    "petition not found",
@@ -97,17 +103,15 @@ func (p *petitionUsecase) Voice(ctx context.Context, id string, userId string) (
 		return err
 	}
 
-	voicedPetitions, err := p.userRepository.GetVoicedPetitions(ctx, userId)
+	isUserVoiced, err := p.userRepository.IsUserVoicedPetition(ctx, userId, id)
 	if err != nil {
 		return err
 	}
 
-	for _, petition := range voicedPetitions {
-		if petition.ID == id {
-			return &V1DomainErrors.AlreadyVoicedError{
-				Message:    "petition already voiced",
-				StatusCode: 409,
-			}
+	if isUserVoiced {
+		return &V1DomainErrors.AlreadyVoicedError{
+			Message:    "petition already voiced",
+			StatusCode: 409,
 		}
 	}
 

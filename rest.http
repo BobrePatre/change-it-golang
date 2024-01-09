@@ -4,7 +4,6 @@
 
 ###
 GET http://localhost:2000/api/v1/petitions
-Authorization: Bearer {{$auth.token("access-token")}}
 
 
 
@@ -14,15 +13,24 @@ Content-Type: application/json
 Authorization: Bearer {{$auth.token("access-token")}}
 
 {
-  "title": "balada",
-  "description": "xuilo"
+  "title": "hello",
+  "description": "world"
 }
 
 ###
-POST http://localhost:2000/api/v1/petitions/9f416181-05c3-4e71-9a68-06b98b69647d/like
+POST http://localhost:2000/api/v1/petitions/ea6acffc-558c-4efe-9a46-28e4774e8f5e/like
 Authorization: Bearer {{$auth.token("access-token")}}
 
+
+
 ###
-POST http://localhost:2000/api/v1/petitions/9f416181-05c3-4e71-9a68-06b98b69647d/voice
+POST http://localhost:2000/api/v1/petitions/578b0aaa-9aa6-45e9-bd37-da4605f4a610/voice
 Authorization: Bearer {{$auth.token("access-token")}}
+
+
+
+###
+DELETE http://localhost:2000/api/v1/petitions/ea6acffc-558c-4efe-9a46-28e4774e8f5e
+Authorization: Bearer {{$auth.token("access-token")}}
+
 

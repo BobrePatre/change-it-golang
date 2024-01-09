@@ -12,4 +12,6 @@ type UserDetails struct {
 type UserRepository interface {
 	GetLikedPetitions(ctx context.Context, userId string) (outDomains []*PetitionDomain, err error)
 	GetVoicedPetitions(ctx context.Context, userId string) (outDomains []*PetitionDomain, err error)
+	IsUserLikedPetition(ctx context.Context, userId string, petitionId string) (res bool, err error)
+	IsUserVoicedPetition(ctx context.Context, userId string, petitionId string) (res bool, err error)
 }

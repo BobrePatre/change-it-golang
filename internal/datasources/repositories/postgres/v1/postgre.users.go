@@ -20,6 +20,10 @@ func (p postgreUserRepository) GetLikedPetitions(ctx context.Context, userId str
         FROM petitions
         JOIN likes ON petitions.id = likes.petition_id
         WHERE likes.user_id = $1
+        GROUP BY petitions.id 
+        ORDER BY MAX(created_at) DESC
+        OFFSET 0
+        LIMIT 5
     `
 
 	var outRecords []V1Records.Petitions
@@ -41,6 +45,10 @@ func (p postgreUserRepository) GetVoicedPetitions(ctx context.Context, userId st
         FROM petitions
         JOIN voices ON petitions.id = voices.petition_id
         WHERE voices.user_id = $1
+                GROUP BY petitions.id 
+        ORDER BY MAX(created_at) DESC
+        OFFSET 0
+        LIMIT 5
     `
 
 	var outRecords []V1Records.Petitions
@@ -52,6 +60,32 @@ func (p postgreUserRepository) GetVoicedPetitions(ctx context.Context, userId st
 	}
 
 	return outDomains, nil
+}
+
+func (p postgreUserRepository) IsUserLikedPetition(ctx context.Context, userId string, petitionId string) (res bool, err error) {
+	query := `SELECT COUNT(*) FROM likes WHERE user_id = $1 AND petition_id = $2`
+
+	var result int64
+	err = p.conn.GetContext(ctx, &result, query, userId, petitionId)
+	if err != nil {
+		return false, err
+	}
+
+	return result > 0, nil
+
+}
+
+func (p postgreUserRepository) IsUserVoicedPetition(ctx context.Context, userId string, petitionId string) (res bool, err error) {
+	query := `SELECT COUNT(*) FROM voices WHERE user_id = $1 AND petition_id = $2`
+
+	var result int64
+	err = p.conn.GetContext(ctx, &result, query, userId, petitionId)
+	if err != nil {
+		return false, err
+	}
+
+	return result > 0, nil
+
 }
 
 func NewUserRepository(conn *sqlx.DB) V1Domains.UserRepository {

@@ -38,7 +38,7 @@ func KycloakAuthMiddleware(roles ...string) gin.HandlerFunc {
 
 		if err != nil {
 			logger.Error("cannot verify token", logrus.Fields{"err": err.Error()})
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+			ctx.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 			ctx.Abort()
 			return
 		}
@@ -100,16 +100,20 @@ func isUserHaveRoles(roles []string, userRoles []string) bool {
 }
 
 func verifyToken(ctx context.Context, tokenString string) (token *jwt.Token, err error) {
+
+	if err := verifyTokenSession(tokenString); err != nil {
+		return nil, err
+	}
+
 	set, err := jwk.Fetch(ctx, config.AppConfig.AUTHJwkPublicUri)
 	if err != nil {
 		return nil, err
 	}
 
 	token, err = jwt.Parse(tokenString, func(token *jwt.Token) (rawKey interface{}, err error) {
-
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			err = fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, err
 		}
 
 		keyID, ok := token.Header["kid"].(string)
@@ -125,8 +129,11 @@ func verifyToken(ctx context.Context, tokenString string) (token *jwt.Token, err
 		}
 
 		err = key.Raw(&rawKey)
+		if err != nil {
+			return nil, fmt.Errorf("invalid token")
+		}
 
-		return rawKey, nil
+		return rawKey, err
 	})
 
 	if err != nil {
@@ -135,4 +142,26 @@ func verifyToken(ctx context.Context, tokenString string) (token *jwt.Token, err
 
 	return token, nil
 
+}
+
+func verifyTokenSession(tokenString string) (err error) {
+	req, err := http.NewRequest("GET", config.AppConfig.AUTHUserInfoEndpoint, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+tokenString)
+	cleint := &http.Client{}
+	resp, err := cleint.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("token session is die")
+	}
+
+	logger.Info("token session is ok", nil)
+
+	return nil
 }

@@ -14,48 +14,26 @@ services:
       - "5432:5432"
 
 
-  # --------------------- [ Auth Database ] ---------------------
-  auth-database:
-    image: postgres:14
-    container_name: "auth-database"
-    volumes:
-      - userdata:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: "change-it"
-      POSTGRES_USER: "change-it"
-      POSTGRES_PASSWORD: "change-it"
-    restart: always
-    networks:
-      - auth-network
 
 
-  # --------------------- [ Auth Server ] ---------------------
   auth:
     image: quay.io/keycloak/keycloak:22.0.1
-    container_name: "auth"
-    depends_on:
-      - auth-database
     ports:
-      - "8081:8080"
+      - "8180:8080"
     environment:
-      KEYCLOAK_ADMIN: "admin"
-      KEYCLOAK_ADMIN_PASSWORD: "admin"
-      KC_PROXY: edge
-      DB_VENDOR: POSTGRES
-      DB_ADDR: auth-database
-      DB_DATABASE: userDB
-      DB_USER: change-it
-      DB_SCHEMA: public
-      DB_PASSWORD: "norma"
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://auth-database:5432/userDB
-      KC_DB_USERNAME: "change-it"
-      KC_DB_PASSWORD: "change-it"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
     command:
       - start-dev
       - --import-realm
+      - "-Dkeycloak.migration.action=import"
+      - "-Dkeycloak.migration.provider=dir"
+      - "-Dkeycloak.migration.dir=/opt/keycloak/data/import"
+      - "-Dkeycloak.migration.strategy=OVERWRITE_EXISTING"
     volumes:
       - ./realms:/opt/keycloak/data/import
-    networks:
-      - auth-network
     restart: always
+
+
+volumes:
+  userdata:

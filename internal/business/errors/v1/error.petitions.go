@@ -4,31 +4,37 @@ const (
 	prefix = "domain: "
 )
 
-type DomainError struct {
+type domainError struct {
 	Message    string
 	StatusCode int
 }
 
-type AlreadyExistsError DomainError
+type AlreadyExistsError domainError
 
 func (e *AlreadyExistsError) Error() string {
 	return prefix + e.Message
 }
 
-type NotFoundError DomainError
+type NotFoundError domainError
 
 func (e *NotFoundError) Error() string {
 	return prefix + e.Message
 }
 
-type AlreadyLikedError DomainError
+type AlreadyLikedError domainError
 
 func (e *AlreadyLikedError) Error() string {
 	return prefix + e.Message
 }
 
-type AlreadyVoicedError DomainError
+type AlreadyVoicedError domainError
 
 func (e *AlreadyVoicedError) Error() string {
+	return prefix + e.Message
+}
+
+type ForbiddenError domainError
+
+func (e *ForbiddenError) Error() string {
 	return prefix + e.Message
 }
