@@ -3,6 +3,7 @@ package v1
 import (
 	V1Domains "change-it/internal/business/domains/v1"
 	V1DomainErrors "change-it/internal/business/errors/v1"
+	"change-it/internal/constants"
 	V1Requests "change-it/internal/http/datatransfers/requests/v1"
 	V1Responses "change-it/internal/http/datatransfers/responses/v1"
 	"change-it/pkg/validators"
@@ -35,7 +36,7 @@ func (h *PetitionsHandler) CreatePetition(ctx *gin.Context) {
 	}
 
 	petitionDomain := request.ToV1Domain()
-	petitionDomain.OwnerID = ctx.Value("userDetails").(V1Domains.UserDetails).UserId
+	petitionDomain.OwnerID = ctx.Value(constants.UserDetails).(V1Domains.UserDetails).UserId
 	err := h.usecase.Save(ctx, petitionDomain)
 
 	if err != nil {
@@ -68,7 +69,7 @@ func (h *PetitionsHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	userDetails := ctx.Value("userDetails").(V1Domains.UserDetails)
+	userDetails := ctx.Value(constants.UserDetails).(V1Domains.UserDetails)
 	err := h.usecase.Delete(ctx, request.ID, userDetails.UserId, userDetails.Roles)
 	if err != nil {
 		var nferr *V1DomainErrors.NotFoundError
@@ -102,7 +103,7 @@ func (h *PetitionsHandler) LikePetition(ctx *gin.Context) {
 		return
 	}
 
-	userId := ctx.Value("userDetails").(V1Domains.UserDetails).UserId
+	userId := ctx.Value(constants.UserDetails).(V1Domains.UserDetails).UserId
 	err := h.usecase.Like(ctx, request.ID, userId)
 	if err != nil {
 		var nferr *V1DomainErrors.NotFoundError
@@ -135,7 +136,7 @@ func (h *PetitionsHandler) VoicePetition(ctx *gin.Context) {
 		return
 	}
 
-	userId := ctx.Value("userDetails").(V1Domains.UserDetails).UserId
+	userId := ctx.Value(constants.UserDetails).(V1Domains.UserDetails).UserId
 	err := h.usecase.Voice(ctx, request.ID, userId)
 	if err != nil {
 		var nferr *V1DomainErrors.NotFoundError

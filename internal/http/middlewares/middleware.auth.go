@@ -3,6 +3,7 @@ package middlewares
 import (
 	V1Domains "change-it/internal/business/domains/v1"
 	"change-it/internal/config"
+	"change-it/internal/constants"
 	"change-it/pkg/helpers"
 	"change-it/pkg/logger"
 	"context"
@@ -67,9 +68,7 @@ func KycloakAuthMiddleware(roles ...string) gin.HandlerFunc {
 			}
 		}
 
-		logger.Error("userId", logrus.Fields{"userId": claims["sub"]})
-
-		ctx.Set("userDetails", V1Domains.UserDetails{
+		ctx.Set(constants.UserDetails, V1Domains.UserDetails{
 			Roles:    userRoles,
 			UserId:   claims["sub"].(string),
 			Email:    claims["email"].(string),
