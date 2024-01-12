@@ -38,6 +38,7 @@ func NewApp() (*App, error) {
 	// API Routes
 	api := router.Group(constants.EndpointV1)
 	V1Routes.NewPetitionRoute(api, conn).RegisterRoutes()
+	V1Routes.NewUserRoutes(api, conn).RegisterRoutes()
 
 	// setup http server
 	server := &http.Server{

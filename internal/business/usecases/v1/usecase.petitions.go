@@ -60,6 +60,7 @@ func (p *petitionUsecase) Delete(ctx context.Context, id string, userId string, 
 }
 
 func (p *petitionUsecase) Like(ctx context.Context, id string, userId string) (err error) {
+
 	_, err = p.petitionRepository.GetByID(ctx, id)
 
 	// if style
