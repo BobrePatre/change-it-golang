@@ -1,12 +1,12 @@
 package validators
 
 import (
+	"change-it/pkg/helpers"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/snykk/go-rest-boilerplate/pkg/helpers"
 )
 
 var mapHelepr = map[string]string{

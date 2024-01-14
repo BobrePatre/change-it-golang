@@ -5,9 +5,9 @@ import (
 	V1DomainErrors "change-it/internal/business/errors/v1"
 	V1DatasourceErrors "change-it/internal/datasources/errors/v1"
 	"change-it/pkg/helpers"
+	"change-it/pkg/logger"
 	"context"
 	"errors"
-	"github.com/snykk/go-rest-boilerplate/pkg/logger"
 )
 
 type petitionUsecase struct {
