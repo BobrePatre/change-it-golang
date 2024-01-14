@@ -17,7 +17,8 @@ type PetitionDomain struct {
 }
 
 type PetitionUseсase interface {
-	Save(ctx context.Context, domain *PetitionDomain) (err error)
+	Create(ctx context.Context, domain *PetitionDomain) (err error)
+	Update(ctx context.Context, domain *PetitionDomain) (err error)
 	Delete(ctx context.Context, id string, userId string, userRoles []string) (err error)
 	Like(ctx context.Context, id string, userId string) (err error)
 	Voice(ctx context.Context, id string, userId string) (err error)

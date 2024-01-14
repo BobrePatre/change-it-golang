@@ -37,7 +37,7 @@ func (h *PetitionsHandler) CreatePetition(ctx *gin.Context) {
 
 	petitionDomain := request.ToV1Domain()
 	petitionDomain.OwnerID = ctx.Value(constants.UserDetails).(V1Domains.UserDetails).UserId
-	err := h.usecase.Save(ctx, petitionDomain)
+	err := h.usecase.Create(ctx, petitionDomain)
 
 	if err != nil {
 		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())

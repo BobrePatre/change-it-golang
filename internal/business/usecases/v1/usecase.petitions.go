@@ -15,11 +15,18 @@ type petitionUsecase struct {
 	userRepository     V1Domains.UserRepository
 }
 
-func (p *petitionUsecase) Save(ctx context.Context, domain *V1Domains.PetitionDomain) (err error) {
+func (p *petitionUsecase) Create(ctx context.Context, domain *V1Domains.PetitionDomain) (err error) {
+	return p.petitionRepository.Create(ctx, domain)
+}
+
+func (p *petitionUsecase) Update(ctx context.Context, domain *V1Domains.PetitionDomain) (err error) {
 	_, err = p.petitionRepository.GetByID(ctx, domain.ID)
 
 	if err != nil {
-		return p.petitionRepository.Create(ctx, domain)
+		return &V1DomainErrors.NotFoundError{
+			Message:    "petition not found",
+			StatusCode: 409,
+		}
 	}
 
 	return p.petitionRepository.Update(ctx, domain)
