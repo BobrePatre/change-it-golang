@@ -28,11 +28,11 @@ func NewPetitionRoute(router *gin.RouterGroup, db *sqlx.DB) *PetitionsRoutes {
 func (r *PetitionsRoutes) RegisterRoutes() {
 	V1PetitionRoute := r.router.Group("/petitions")
 	{
-		V1PetitionRoute.GET("/", r.V1Handler.GetAllPetitions)
-		V1PetitionRoute.POST("/", middlewares.KeycloakAuthMiddleware(), r.V1Handler.CreatePetition)
-		V1PetitionRoute.POST("/:id/like", middlewares.KeycloakAuthMiddleware(), r.V1Handler.LikePetition)
-		V1PetitionRoute.POST("/:id/voice", middlewares.KeycloakAuthMiddleware(), r.V1Handler.VoicePetition)
-		V1PetitionRoute.DELETE("/:id", middlewares.KeycloakAuthMiddleware(), r.V1Handler.Delete)
+		V1PetitionRoute.GET("", r.V1Handler.GetAllPetitions)
+		V1PetitionRoute.POST("", middlewares.KycloakAuthMiddleware(), r.V1Handler.CreatePetition)
+		V1PetitionRoute.POST("/:id/like", middlewares.KycloakAuthMiddleware(), r.V1Handler.LikePetition)
+		V1PetitionRoute.POST("/:id/voice", middlewares.KycloakAuthMiddleware(), r.V1Handler.VoicePetition)
+		V1PetitionRoute.DELETE("/:id", middlewares.KycloakAuthMiddleware(), r.V1Handler.Delete)
 	}
 
 }

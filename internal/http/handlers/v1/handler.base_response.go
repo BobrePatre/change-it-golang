@@ -13,6 +13,10 @@ func NewSuccessResponseWithData(c *gin.Context, statusCode int, data interface{}
 }
 
 func NewErrorResponse(c *gin.Context, statusCode int, err string) {
-	c.AbortWithStatusJSON(statusCode, gin.H{"message": err})
+	c.JSON(statusCode, gin.H{"message": err})
 
+}
+
+func NewAbortResponse(c *gin.Context, statusCode int, message string) {
+	c.AbortWithStatusJSON(statusCode, gin.H{"message": message})
 }

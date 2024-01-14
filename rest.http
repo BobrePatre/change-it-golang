@@ -18,7 +18,7 @@ Authorization: Bearer {{$auth.token("access-token")}}
 }
 
 ###
-POST http://localhost:2000/api/v1/petitions/ea6acffc-558c-4efe-9a46-28e4774e8f5e/like
+POST http://localhost:2000/api/v1/petitions/5fa01649-467e-4a41-86c8-d67e62832fe6/like
 Authorization: Bearer {{$auth.token("access-token")}}
 
 
@@ -34,3 +34,18 @@ DELETE http://localhost:2000/api/v1/petitions/ea6acffc-558c-4efe-9a46-28e4774e8f
 Authorization: Bearer {{$auth.token("access-token")}}
 
 
+
+###
+GET http://localhost:2000/api/v1/user/likes
+Authorization: Bearer {{$auth.token("access-token")}}
+
+
+
+###
+GET http://localhost:2000/api/v1/user/voices
+Authorization: Bearer {{$auth.token("access-token")}}
+
+
+###
+GET http://localhost:2000/api/v1/user
+Authorization: Bearer {{$auth.token("access-token")}}

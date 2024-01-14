@@ -11,7 +11,31 @@ type postgreUserRepository struct {
 	conn *sqlx.DB
 }
 
-func (p postgreUserRepository) GetLikedPetitions(ctx context.Context, userId string) (outDomains []*V1Domains.PetitionDomain, err error) {
+func (p *postgreUserRepository) GetOwnedPetitions(ctx context.Context, userId string) (outDomains []*V1Domains.PetitionDomain, err error) {
+	query := `
+        SELECT petitions.*, 
+               (SELECT COUNT(*) FROM likes WHERE likes.petition_id = petitions.id) AS likes_count,
+               (SELECT COUNT(*) FROM voices WHERE voices.petition_id = petitions.id) AS voices_count
+        FROM petitions
+        WHERE petitions.owner_id = $1
+        GROUP BY petitions.id 
+        ORDER BY MAX(created_at) DESC
+        OFFSET 0
+        LIMIT 5
+    `
+
+	var outRecords []V1Records.Petitions
+	err = p.conn.SelectContext(ctx, &outRecords, query, userId)
+
+	outDomains = V1Records.ToArrayOfPetitionsV1Domain(&outRecords)
+	if err != nil {
+		return outDomains, err
+	}
+
+	return outDomains, nil
+}
+
+func (p *postgreUserRepository) GetLikedPetitions(ctx context.Context, userId string) (outDomains []*V1Domains.PetitionDomain, err error) {
 
 	query := `
         SELECT petitions.*, 
@@ -37,7 +61,7 @@ func (p postgreUserRepository) GetLikedPetitions(ctx context.Context, userId str
 	return outDomains, nil
 }
 
-func (p postgreUserRepository) GetVoicedPetitions(ctx context.Context, userId string) (outDomains []*V1Domains.PetitionDomain, err error) {
+func (p *postgreUserRepository) GetVoicedPetitions(ctx context.Context, userId string) (outDomains []*V1Domains.PetitionDomain, err error) {
 	query := `
         SELECT petitions.*, 
                (SELECT COUNT(*) FROM likes WHERE likes.petition_id = petitions.id) AS likes_count,
@@ -62,7 +86,7 @@ func (p postgreUserRepository) GetVoicedPetitions(ctx context.Context, userId st
 	return outDomains, nil
 }
 
-func (p postgreUserRepository) IsUserLikedPetition(ctx context.Context, userId string, petitionId string) (res bool, err error) {
+func (p *postgreUserRepository) IsUserLikedPetition(ctx context.Context, userId string, petitionId string) (res bool, err error) {
 	query := `SELECT COUNT(*) FROM likes WHERE user_id = $1 AND petition_id = $2`
 
 	var result int64
@@ -75,7 +99,7 @@ func (p postgreUserRepository) IsUserLikedPetition(ctx context.Context, userId s
 
 }
 
-func (p postgreUserRepository) IsUserVoicedPetition(ctx context.Context, userId string, petitionId string) (res bool, err error) {
+func (p *postgreUserRepository) IsUserVoicedPetition(ctx context.Context, userId string, petitionId string) (res bool, err error) {
 	query := `SELECT COUNT(*) FROM voices WHERE user_id = $1 AND petition_id = $2`
 
 	var result int64
