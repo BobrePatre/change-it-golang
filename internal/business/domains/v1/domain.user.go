@@ -3,10 +3,12 @@ package v1
 import "context"
 
 type UserDetails struct {
-	Roles    []string
-	UserId   string
-	Email    string
-	Username string
+	Roles      []string
+	UserId     string
+	Email      string
+	Username   string
+	Name       string
+	FamilyName string
 }
 
 type UserUsecase interface {

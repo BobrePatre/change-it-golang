@@ -68,11 +68,17 @@ func KeycloakAuthMiddleware(roles ...string) gin.HandlerFunc {
 			}
 		}
 
+		userEmail, ok := claims["email"].(string)
+		if !ok {
+			userEmail = ""
+		}
 		ctx.Set(constants.UserDetails, V1Domains.UserDetails{
-			Roles:    userRoles,
-			UserId:   claims["sub"].(string),
-			Email:    claims["email"].(string),
-			Username: claims["name"].(string),
+			Roles:      userRoles,
+			UserId:     claims["sub"].(string),
+			Email:      userEmail,
+			Username:   claims["preferred_username"].(string),
+			Name:       claims["name"].(string),
+			FamilyName: claims["family_name"].(string),
 		})
 
 		if len(roles) == 0 {

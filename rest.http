@@ -18,7 +18,7 @@ Authorization: Bearer {{$auth.token("access-token")}}
 }
 
 ###
-POST http://localhost:2000/api/v1/petitions/5fa01649-467e-4a41-86c8-d67e62832fe6/like
+POST http://localhost:2000/api/v1/petitions/dd165a01-bdee-4710-b076-106ee5c3a126/like
 Authorization: Bearer {{$auth.token("access-token")}}
 
 
@@ -48,4 +48,9 @@ Authorization: Bearer {{$auth.token("access-token")}}
 
 ###
 GET http://localhost:2000/api/v1/user
+Authorization: Bearer {{$auth.token("access-token")}}
+
+
+###
+GET http://localhost:8180/realms/changeit-realm/protocol/openid-connect/userinfo
 Authorization: Bearer {{$auth.token("access-token")}}
