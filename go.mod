@@ -11,7 +11,6 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/snykk/go-rest-boilerplate v0.0.0-20230426052515-ef4bb28f8d91
 	github.com/spf13/viper v1.18.2
 )
 
