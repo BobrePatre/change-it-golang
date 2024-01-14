@@ -1,5 +1,4 @@
 
-SET TIME ZONE "Europe/Moscow";
 CREATE TABLE IF NOT EXISTS likes(
     user_id uuid NOT NULL,
     petition_id uuid NOT NULL,
