@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,10 +13,6 @@ func NewSuccessResponseWithData(c *gin.Context, statusCode int, data interface{}
 }
 
 func NewErrorResponse(c *gin.Context, statusCode int, err string) {
-	c.JSON(statusCode, gin.H{"message": err})
+	c.AbortWithStatusJSON(statusCode, gin.H{"message": err})
 
-}
-
-func NewAbortResponse(c *gin.Context, message string) {
-	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": message})
 }

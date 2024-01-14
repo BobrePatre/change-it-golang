@@ -27,6 +27,10 @@ func (config *SQLXConfig) InitializeSQLXDatabase() (*sqlx.DB, error) {
 		return nil, fmt.Errorf("error opening database: %v", err)
 	}
 
+	_, err = time.LoadLocation("Europe/Moscow")
+	if err != nil {
+		panic(err.Error())
+	}
 	// set maximum number of open connections to database
 	logger.Info(fmt.Sprintf("Setting maximum number of open connections to %d", config.MaxOpenConns), logrus.Fields{constants.LoggerCategory: constants.LoggerCategoryDatabase})
 	db.SetMaxOpenConns(config.MaxOpenConns)

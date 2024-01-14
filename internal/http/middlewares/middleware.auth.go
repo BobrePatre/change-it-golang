@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-func KycloakAuthMiddleware(roles ...string) gin.HandlerFunc {
+func KeycloakAuthMiddleware(roles ...string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		authHeader := ctx.GetHeader("Authorization")
@@ -150,14 +150,14 @@ func verifyTokenSession(tokenString string) (err error) {
 	}
 
 	req.Header.Set("Authorization", "Bearer "+tokenString)
-	cleint := &http.Client{}
-	resp, err := cleint.Do(req)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("token session is die")
+		return fmt.Errorf("user session is die")
 	}
 
 	logger.Info("token session is ok", nil)
