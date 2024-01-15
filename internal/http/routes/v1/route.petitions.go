@@ -3,7 +3,6 @@ package v1
 import (
 	V1Usecase "change-it/internal/business/usecases/v1"
 	V1PostgresRepository "change-it/internal/datasources/repositories/postgres/v1"
-	V1Handler "change-it/internal/http/handlers/v1"
 	V1Handlers "change-it/internal/http/handlers/v1"
 	"change-it/internal/http/middlewares"
 	"github.com/gin-gonic/gin"
@@ -20,7 +19,7 @@ func NewPetitionRoute(router *gin.RouterGroup, db *sqlx.DB) *PetitionsRoutes {
 	V1PetitionRepository := V1PostgresRepository.NewPetitionRepository(db)
 	V1UserRepository := V1PostgresRepository.NewUserRepository(db)
 	V1PetitionUsecase := V1Usecase.NewPetitionUsecase(V1PetitionRepository, V1UserRepository)
-	V1PetitionHandler := V1Handler.NewPetitionsHandler(V1PetitionUsecase)
+	V1PetitionHandler := V1Handlers.NewPetitionsHandler(V1PetitionUsecase)
 
 	return &PetitionsRoutes{V1Handler: V1PetitionHandler, router: router, db: db}
 }
