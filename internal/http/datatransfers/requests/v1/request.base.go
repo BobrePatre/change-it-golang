@@ -5,6 +5,6 @@ type Id struct {
 }
 
 type PageRequest struct {
-	PageNumber int `query:"page"`
-	PageSize   int `query:"page-size"`
+	PageNumber int64 `query:"page"`
+	PageSize   int64 `query:"page-size"`
 }

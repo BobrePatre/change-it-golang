@@ -3,7 +3,7 @@
 
 
 ###
-GET http://localhost:2000/api/v1/petitions
+GET http://localhost:2000/api/v1/petitions?page-size=2&page=1
 
 
 

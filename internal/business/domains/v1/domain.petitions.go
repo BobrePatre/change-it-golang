@@ -22,7 +22,7 @@ type PetitionUseсase interface {
 	Delete(ctx context.Context, id string, userId string, userRoles []string) (err error)
 	Like(ctx context.Context, id string, userId string) (err error)
 	Voice(ctx context.Context, id string, userId string) (err error)
-	GetAll(ctx context.Context) ([]*PetitionDomain, error)
+	GetAll(ctx context.Context, pageNumber int64, pageSize int64) (outDomains []*PetitionDomain, total int64, err error)
 }
 
 type PetitionRepository interface {
@@ -31,6 +31,6 @@ type PetitionRepository interface {
 	Delete(ctx context.Context, id string) (err error)
 	Like(ctx context.Context, id string, userId string) (err error)
 	Voice(ctx context.Context, id string, userId string) (err error)
-	GetAll(ctx context.Context) (outDomains []*PetitionDomain, err error)
+	GetAll(ctx context.Context, pageNumber int64, pageSize int64) (outDomains []*PetitionDomain, total int64, err error)
 	GetByID(ctx context.Context, id string) (outDomain *PetitionDomain, err error)
 }

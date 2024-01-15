@@ -47,13 +47,22 @@ func (h *PetitionsHandler) CreatePetition(ctx *gin.Context) {
 }
 
 func (h *PetitionsHandler) GetAllPetitions(ctx *gin.Context) {
-	petitionDomains, err := h.usecase.GetAll(ctx)
+
+	pageRequest := ctx.Value(constants.PageInfo).(V1Requests.PageRequest)
+
+	petitionDomains, total, err := h.usecase.GetAll(ctx, pageRequest.PageNumber, pageRequest.PageSize)
 	if err != nil {
 		NewErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	NewSuccessResponseWithData(ctx, http.StatusOK, V1Responses.ArrayFromV1Domains(petitionDomains))
+	outResponses := V1Responses.ArrayFromV1Domains(petitionDomains)
+	response := V1Responses.PageResponse{
+		CurrentPage: pageRequest.PageNumber,
+		PageSize:    pageRequest.PageSize,
+		TotalPages:  total,
+		Data:        outResponses,
+	}
+	NewSuccessResponseWithData(ctx, http.StatusOK, response)
 }
 
 func (h *PetitionsHandler) Delete(ctx *gin.Context) {

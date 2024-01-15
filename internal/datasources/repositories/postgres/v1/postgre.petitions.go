@@ -81,7 +81,10 @@ func (p *postgrePetitonRepository) GetByID(ctx context.Context, id string) (outD
 	outDomain = petitionRecord.ToV1Domain()
 	return outDomain, nil
 }
-func (p *postgrePetitonRepository) GetAll(ctx context.Context) (outDomains []*V1Domains.PetitionDomain, err error) {
+func (p *postgrePetitonRepository) GetAll(ctx context.Context, pageNumber int64, pageSize int64) (outDomains []*V1Domains.PetitionDomain, total int64, err error) {
+
+	offset := (pageNumber - 1) * pageSize
+
 	query := `
         SELECT 
             petitions.*, 
@@ -90,20 +93,31 @@ func (p *postgrePetitonRepository) GetAll(ctx context.Context) (outDomains []*V1
         FROM petitions
         GROUP BY petitions.id
         ORDER BY MAX(created_at) DESC
-        OFFSET 0
-        LIMIT 5
+        OFFSET $1
+        LIMIT $2
         
     `
 
 	var outRecords []V1Records.Petitions
-	err = p.conn.SelectContext(ctx, &outRecords, query)
+	err = p.conn.SelectContext(ctx, &outRecords, query, offset, pageSize)
+
+	query = `SELECT COUNT(*) FROM petitions`
+
+	var totalRecords int64
+	err = p.conn.GetContext(ctx, &totalRecords, query)
+
+	if totalRecords%pageSize == 0 {
+		total = totalRecords / pageSize
+	} else {
+		total = totalRecords/pageSize + 1
+	}
 
 	outDomains = V1Records.ToArrayOfPetitionsV1Domain(&outRecords)
 	if err != nil {
-		return outDomains, err
+		return outDomains, total, err
 	}
 
-	return outDomains, nil
+	return outDomains, total, nil
 }
 
 func NewPetitionRepository(conn *sqlx.DB) V1Domains.PetitionRepository {
