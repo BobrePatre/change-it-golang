@@ -126,7 +126,7 @@ func (p *petitionUsecase) Voice(ctx context.Context, id string, userId string) (
 	return p.petitionRepository.Voice(ctx, id, userId)
 }
 
-func (p *petitionUsecase) GetAll(ctx context.Context, pageNumber int64, pageSize int64) (outDomains []*V1Domains.PetitionDomain, total int64, err error) {
+func (p *petitionUsecase) GetAll(ctx context.Context, pageNumber int, pageSize int) (outDomains []*V1Domains.PetitionDomain, total int, err error) {
 	return p.petitionRepository.GetAll(ctx, pageNumber, pageSize)
 }
 

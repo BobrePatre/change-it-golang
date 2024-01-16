@@ -10,8 +10,8 @@ type Petitions struct {
 	Title       string    `db:"title"`
 	Description string    `db:"description"`
 	OwnerID     string    `db:"owner_id"`
-	LikesCount  int64     `db:"likes_count"`
-	VoicesCount int64     `db:"voices_count"`
+	LikesCount  int       `db:"likes_count"`
+	VoicesCount int       `db:"voices_count"`
 	CreatedAt   time.Time `db:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
 }

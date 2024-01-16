@@ -10,8 +10,8 @@ type PetitionResponse struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	OwnerID     string    `json:"owner_id"`
-	Likes       int64     `json:"likes"`
-	Voices      int64     `json:"voices"`
+	Likes       int       `json:"likes"`
+	Voices      int       `json:"voices"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

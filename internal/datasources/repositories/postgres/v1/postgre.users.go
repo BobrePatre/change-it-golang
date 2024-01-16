@@ -11,7 +11,10 @@ type postgreUserRepository struct {
 	conn *sqlx.DB
 }
 
-func (p *postgreUserRepository) GetOwnedPetitions(ctx context.Context, userId string) (outDomains []*V1Domains.PetitionDomain, err error) {
+func (p *postgreUserRepository) GetOwnedPetitions(ctx context.Context, userId string, pageNumber int, pageSize int) (outDomains []*V1Domains.PetitionDomain, total int, err error) {
+
+	offset := (pageNumber - 1) * pageSize
+
 	query := `
         SELECT petitions.*, 
                (SELECT COUNT(*) FROM likes WHERE likes.petition_id = petitions.id) AS likes_count,
@@ -20,22 +23,35 @@ func (p *postgreUserRepository) GetOwnedPetitions(ctx context.Context, userId st
         WHERE petitions.owner_id = $1
         GROUP BY petitions.id 
         ORDER BY MAX(created_at) DESC
-        OFFSET 0
-        LIMIT 5
+        OFFSET $2
+        LIMIT $3
     `
 
 	var outRecords []V1Records.Petitions
-	err = p.conn.SelectContext(ctx, &outRecords, query, userId)
+	err = p.conn.SelectContext(ctx, &outRecords, query, userId, offset, pageSize)
+
+	query = `SELECT COUNT(*) FROM petitions WHERE owner_id = $1`
+
+	var totalRecords int
+	err = p.conn.GetContext(ctx, &totalRecords, query, userId)
+
+	if totalRecords%pageSize == 0 {
+		total = totalRecords / pageSize
+	} else {
+		total = totalRecords/pageSize + 1
+	}
 
 	outDomains = V1Records.ToArrayOfPetitionsV1Domain(&outRecords)
 	if err != nil {
-		return outDomains, err
+		return outDomains, 0, err
 	}
 
-	return outDomains, nil
+	return outDomains, total, nil
 }
 
-func (p *postgreUserRepository) GetLikedPetitions(ctx context.Context, userId string) (outDomains []*V1Domains.PetitionDomain, err error) {
+func (p *postgreUserRepository) GetLikedPetitions(ctx context.Context, userId string, pageNumber int, pageSize int) (outDomains []*V1Domains.PetitionDomain, total int, err error) {
+
+	offset := (pageNumber - 1) * pageSize
 
 	query := `
         SELECT petitions.*, 
@@ -46,22 +62,41 @@ func (p *postgreUserRepository) GetLikedPetitions(ctx context.Context, userId st
         WHERE likes.user_id = $1
         GROUP BY petitions.id 
         ORDER BY MAX(created_at) DESC
-        OFFSET 0
-        LIMIT 5
+        OFFSET $2
+        LIMIT $3
     `
 
 	var outRecords []V1Records.Petitions
-	err = p.conn.SelectContext(ctx, &outRecords, query, userId)
+	err = p.conn.SelectContext(ctx, &outRecords, query, userId, offset, pageSize)
+
+	query = `        
+		SELECT COUNT(petitions.*)
+        FROM petitions
+        JOIN likes ON petitions.id = likes.petition_id
+        WHERE likes.user_id = $1
+        `
+
+	var totalRecords int
+	err = p.conn.GetContext(ctx, &totalRecords, query, userId)
+
+	if totalRecords%pageSize == 0 {
+		total = totalRecords / pageSize
+	} else {
+		total = totalRecords/pageSize + 1
+	}
 
 	outDomains = V1Records.ToArrayOfPetitionsV1Domain(&outRecords)
 	if err != nil {
-		return outDomains, err
+		return outDomains, 0, err
 	}
 
-	return outDomains, nil
+	return outDomains, total, nil
 }
 
-func (p *postgreUserRepository) GetVoicedPetitions(ctx context.Context, userId string) (outDomains []*V1Domains.PetitionDomain, err error) {
+func (p *postgreUserRepository) GetVoicedPetitions(ctx context.Context, userId string, pageNumber int, pageSize int) (outDomains []*V1Domains.PetitionDomain, total int, err error) {
+
+	offset := (pageNumber - 1) * pageSize
+
 	query := `
         SELECT petitions.*, 
                (SELECT COUNT(*) FROM likes WHERE likes.petition_id = petitions.id) AS likes_count,
@@ -69,21 +104,35 @@ func (p *postgreUserRepository) GetVoicedPetitions(ctx context.Context, userId s
         FROM petitions
         JOIN voices ON petitions.id = voices.petition_id
         WHERE voices.user_id = $1
-                GROUP BY petitions.id 
+        GROUP BY petitions.id 
         ORDER BY MAX(created_at) DESC
-        OFFSET 0
-        LIMIT 5
+        OFFSET $2
+        LIMIT $3
     `
 
 	var outRecords []V1Records.Petitions
-	err = p.conn.SelectContext(ctx, &outRecords, query, userId)
+	err = p.conn.SelectContext(ctx, &outRecords, query, userId, offset, pageSize)
+
+	query = `        SELECT COUNT(petitions)
+        FROM petitions
+        JOIN voices ON petitions.id = voices.petition_id
+        WHERE voices.user_id = $1`
+
+	var totalRecords int
+	err = p.conn.GetContext(ctx, &totalRecords, query, userId)
+
+	if totalRecords%pageSize == 0 {
+		total = totalRecords / pageSize
+	} else {
+		total = totalRecords/pageSize + 1
+	}
 
 	outDomains = V1Records.ToArrayOfPetitionsV1Domain(&outRecords)
 	if err != nil {
-		return outDomains, err
+		return outDomains, 0, err
 	}
 
-	return outDomains, nil
+	return outDomains, total, nil
 }
 
 func (p *postgreUserRepository) IsUserLikedPetition(ctx context.Context, userId string, petitionId string) (res bool, err error) {

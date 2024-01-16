@@ -17,9 +17,8 @@ func SetupPostgresConnection() (*sqlx.DB, error) {
 	case constants.EnvironmentProduction:
 		dsn = config.AppConfig.DBPostgreURL
 	}
-
 	// Setup sqlx config of postgreSQL
-	config := drivers.SQLXConfig{
+	databaseConfig := drivers.SQLXConfig{
 		DriverName:     config.AppConfig.DBPostgreDriver,
 		DataSourceName: dsn,
 		MaxOpenConns:   100,
@@ -28,7 +27,7 @@ func SetupPostgresConnection() (*sqlx.DB, error) {
 	}
 
 	// Initialize postgreSQL connection with sqlx
-	conn, err := config.InitializeSQLXDatabase()
+	conn, err := databaseConfig.InitializeSQLXDatabase()
 	if err != nil {
 		return nil, err
 	}

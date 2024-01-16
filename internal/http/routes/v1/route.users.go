@@ -26,9 +26,9 @@ func NewUserRoutes(router *gin.RouterGroup, db *sqlx.DB) *UsersRoutes {
 func (r *UsersRoutes) RegisterRoutes() {
 	V1PetitionRoute := r.router.Group("/user")
 	{
-		V1PetitionRoute.GET("/likes", middlewares.KeycloakAuthMiddleware(), r.V1Handler.GetLikedPetitions)
-		V1PetitionRoute.GET("/voices", middlewares.KeycloakAuthMiddleware(), r.V1Handler.GetVoicedPetitions)
-		V1PetitionRoute.GET("", middlewares.KeycloakAuthMiddleware(), r.V1Handler.GetOwnedPetitions)
+		V1PetitionRoute.GET("/likes", middlewares.KeycloakAuthMiddleware(), middlewares.Pagination(), r.V1Handler.GetLikedPetitions)
+		V1PetitionRoute.GET("/voices", middlewares.KeycloakAuthMiddleware(), middlewares.Pagination(), r.V1Handler.GetVoicedPetitions)
+		V1PetitionRoute.GET("", middlewares.KeycloakAuthMiddleware(), middlewares.Pagination(), r.V1Handler.GetOwnedPetitions)
 	}
 
 }

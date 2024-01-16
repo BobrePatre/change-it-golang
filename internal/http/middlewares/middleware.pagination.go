@@ -13,12 +13,15 @@ func Pagination() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		var pRequest V1Requests.PageRequest
-		err := ctx.BindQuery(&pRequest)
+		err := ctx.ShouldBindQuery(&pRequest)
 		if err != nil {
+			logger.Error("sheet of pagination", nil)
+
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 
+		logger.Info(ctx.Query("page"), nil)
 		logger.ErrorF("pagination request", logrus.Fields{"request": pRequest})
 
 		if pRequest.PageSize == 0 {

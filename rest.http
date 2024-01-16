@@ -3,7 +3,7 @@
 
 
 ###
-GET http://localhost:2000/api/v1/petitions?page-size=2&page=1
+GET http://localhost:2000/api/v1/petitions?page-size=1&page=1
 
 
 
@@ -18,19 +18,19 @@ Authorization: Bearer {{$auth.token("access-token")}}
 }
 
 ###
-POST http://localhost:2000/api/v1/petitions/dd165a01-bdee-4710-b076-106ee5c3a126/like
+POST http://localhost:2000/api/v1/petitions/5a506fd7-eac8-4709-942f-2aaef27e614b/like
 Authorization: Bearer {{$auth.token("access-token")}}
 
 
 
 ###
-POST http://localhost:2000/api/v1/petitions/578b0aaa-9aa6-45e9-bd37-da4605f4a610/voice
+POST http://localhost:2000/api/v1/petitions/5a506fd7-eac8-4709-942f-2aaef27e614b/voice
 Authorization: Bearer {{$auth.token("access-token")}}
 
 
 
 ###
-DELETE http://localhost:2000/api/v1/petitions/ea6acffc-558c-4efe-9a46-28e4774e8f5e
+DELETE http://localhost:2000/api/v1/petitions/5a506fd7-eac8-4709-942f-2aaef27e614b
 Authorization: Bearer {{$auth.token("access-token")}}
 
 

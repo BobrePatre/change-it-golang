@@ -43,10 +43,8 @@ func ValidatePayloads(payload interface{}) (err error) {
 			}
 			message = fmt.Sprintf("%s: %s%s", strings.ToLower(field), value, mapHelepr[tag])
 		}
-
 		return errors.New(message)
 	}
-
 	return nil
 }
 

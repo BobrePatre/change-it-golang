@@ -81,7 +81,7 @@ func (p *postgrePetitonRepository) GetByID(ctx context.Context, id string) (outD
 	outDomain = petitionRecord.ToV1Domain()
 	return outDomain, nil
 }
-func (p *postgrePetitonRepository) GetAll(ctx context.Context, pageNumber int64, pageSize int64) (outDomains []*V1Domains.PetitionDomain, total int64, err error) {
+func (p *postgrePetitonRepository) GetAll(ctx context.Context, pageNumber int, pageSize int) (outDomains []*V1Domains.PetitionDomain, total int, err error) {
 
 	offset := (pageNumber - 1) * pageSize
 
@@ -103,7 +103,7 @@ func (p *postgrePetitonRepository) GetAll(ctx context.Context, pageNumber int64,
 
 	query = `SELECT COUNT(*) FROM petitions`
 
-	var totalRecords int64
+	var totalRecords int
 	err = p.conn.GetContext(ctx, &totalRecords, query)
 
 	if totalRecords%pageSize == 0 {
