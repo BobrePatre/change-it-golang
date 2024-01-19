@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: backend
+          image: ge0rg25/changeit-golnag:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 2000
+          env:
+            - name: ENVIRONMENT
+              value: development
+            - name: DEBUG
+              value: "true"
+            - name: DB_POSTGRE_DRIVER
+              value: postgres
+            - name: DB_POSTGRE_DSN
+              value: "user=postgres password=postgres host=database-pg port=5432 dbname=change-it sslmode=disable"
+            - name: DB_POSTGRE_URL
+              value: postgres://user:pass@host/db
+            - name: AUTH_REALM
+              value: changeit-realm
+            - name: AUTH_CLIENT
+              value: changeit-client
+            - name: AUTH_JWK_SECRET_URI
+              value: http://keycloak:8080/realms/changeit-realm/protocol/openid-connect/certs
+            - name: AUTH_USER_INFO_ENDPOINT
+              value: http://auth:8080/realms/changeit-realm/protocol/openid-connect/userinfo
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 2000
+      targetPort: 2000
+  type: LoadBalancer

@@ -1,9 +1,8 @@
 
 
 
-
 ###
-GET http://localhost:2000/api/v1/petitions?page-size=1&page=1
+GET http://localhost:51209/api/v1/petitions?page-size=7&page=6
 
 
 

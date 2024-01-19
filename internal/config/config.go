@@ -22,7 +22,7 @@ type Config struct {
 	AUTHUserInfoEndpoint string `mapstructure:"AUTH_USER_INFO_ENDPOINT"`
 }
 
-func InitializeAppConfig() error {
+func InitializeAppConfig() (err error) {
 	viper.SetConfigName(".env") // allow directly reading from .env file
 	viper.SetConfigType("env")
 	viper.AddConfigPath(".")
@@ -30,7 +30,7 @@ func InitializeAppConfig() error {
 	viper.AddConfigPath("/")
 	viper.AllowEmptyEnv(true)
 	viper.AutomaticEnv()
-	err := viper.ReadInConfig()
+	err = viper.ReadInConfig()
 	if err != nil {
 		return constants.ErrLoadConfig
 	}

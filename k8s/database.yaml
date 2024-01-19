@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database-pg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database-pg
+  template:
+    metadata:
+      labels:
+        app: database-pg
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+            - name: POSTGRES_DB
+              value: change-it
+            - name: TZ
+              value: Europe/Moscow
+          ports:
+            - containerPort: 5432
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-pg
+spec:
+  selector:
+    app: database-pg
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
