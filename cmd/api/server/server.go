@@ -26,21 +26,17 @@ type App struct {
 }
 
 func NewApp() (*App, error) {
-	// setup databases
 	conn, err := utils.SetupPostgresConnection()
 	if err != nil {
 		return nil, err
 	}
 
-	// setup router
 	router := setupRouter()
 
-	// API Routes
 	api := router.Group(constants.EndpointV1)
 	V1Routes.NewPetitionRoute(api, conn).RegisterRoutes()
 	V1Routes.NewUserRoutes(api, conn).RegisterRoutes()
 
-	// setup http server
 	server := &http.Server{
 		Addr:           fmt.Sprintf(":%d", config.AppConfig.Port),
 		Handler:        router,
@@ -55,7 +51,6 @@ func NewApp() (*App, error) {
 }
 
 func (a *App) Run() (err error) {
-	// Gracefull Shutdown
 	go func() {
 		logger.InfoF("success to listen and serve on :%d", logrus.Fields{constants.LoggerCategory: constants.LoggerCategoryServer}, config.AppConfig.Port)
 		if err := a.HttpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -66,7 +61,6 @@ func (a *App) Run() (err error) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	// make blocking channel and waiting for a signal
 	<-quit
 	logger.Info("shutdown server ...", logrus.Fields{constants.LoggerCategory: constants.LoggerCategoryServer})
 
@@ -77,7 +71,6 @@ func (a *App) Run() (err error) {
 		return fmt.Errorf("error when shutdown server: %v", err)
 	}
 
-	// catching ctx.Done(). timeout of 5 seconds.
 	<-ctx.Done()
 	logger.Info("timeout of 5 seconds.", logrus.Fields{constants.LoggerCategory: constants.LoggerCategoryServer})
 	logger.Info("server exiting", logrus.Fields{constants.LoggerCategory: constants.LoggerCategoryServer})
@@ -85,17 +78,14 @@ func (a *App) Run() (err error) {
 }
 
 func setupRouter() *gin.Engine {
-	// set the runtime mode
 	var mode = gin.ReleaseMode
 	if config.AppConfig.Debug {
 		mode = gin.DebugMode
 	}
 	gin.SetMode(mode)
 
-	// create a new router instance
 	router := gin.New()
 
-	// set up middlewares
 	router.Use(middlewares.CORSMiddleware())
 	router.Use(gin.LoggerWithFormatter(logger.HTTPLogger))
 	router.Use(gin.Recovery())

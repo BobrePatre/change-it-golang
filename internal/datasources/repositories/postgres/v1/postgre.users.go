@@ -113,7 +113,7 @@ func (p *postgreUserRepository) GetVoicedPetitions(ctx context.Context, userId s
 	var outRecords []V1Records.Petitions
 	err = p.conn.SelectContext(ctx, &outRecords, query, userId, offset, pageSize)
 
-	query = `        SELECT COUNT(petitions)
+	query = `SELECT COUNT(petitions)
         FROM petitions
         JOIN voices ON petitions.id = voices.petition_id
         WHERE voices.user_id = $1`

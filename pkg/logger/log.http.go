@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// color
 const (
 	Red    = "41"
 	Yellow = "43"

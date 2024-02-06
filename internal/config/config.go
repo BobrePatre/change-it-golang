@@ -23,7 +23,7 @@ type Config struct {
 }
 
 func InitializeAppConfig() (err error) {
-	viper.SetConfigName(".env") // allow directly reading from .env file
+	viper.SetConfigName(".env")
 	viper.SetConfigType("env")
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("internal/config")
@@ -40,7 +40,6 @@ func InitializeAppConfig() (err error) {
 		return constants.ErrParseConfig
 	}
 
-	// check
 	if AppConfig.Port == 0 || AppConfig.Environment == "" || AppConfig.DBPostgreDriver == "" {
 		return constants.ErrEmptyVar
 	}
