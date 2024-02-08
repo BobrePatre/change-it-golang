@@ -7,8 +7,10 @@ import (
 	"change-it/pkg/helpers"
 	"change-it/pkg/logger"
 	"context"
+	"crypto/rsa"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/goccy/go-json"
 	"github.com/golang-jwt/jwt"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/mitchellh/mapstructure"
@@ -16,6 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func KeycloakAuthMiddleware(rdc *redis.Client) func(roles ...string) gin.HandlerFunc {
@@ -108,16 +111,28 @@ func isUserHaveRoles(roles []string, userRoles []string) bool {
 
 func verifyToken(ctx context.Context, r *redis.Client, tokenString string) (token *jwt.Token, err error) {
 
-	if err := verifyTokenSession(tokenString); err != nil {
-		return nil, err
-	}
-
-	set, err := jwk.Fetch(ctx, config.AppConfig.AUTHJwkPublicUri)
-	if err != nil {
-		return nil, err
-	}
+	//if err := verifyTokenSession(tokenString); err != nil {
+	//	return nil, err
+	//}
 
 	token, err = jwt.Parse(tokenString, func(token *jwt.Token) (rawKey interface{}, err error) {
+
+		result, err := r.Get(ctx, constants.JwkKey).Result()
+		if err == nil {
+			logger.Info("Jwk get from cache", nil)
+			var resultKey *rsa.PublicKey
+			// TODO: fix serialize and desirialize key for redis
+			err := json.Unmarshal([]byte(result), &resultKey)
+			if err != nil {
+				return nil, err
+			}
+			return resultKey, nil
+		}
+
+		set, err := jwk.Fetch(ctx, config.AppConfig.AUTHJwkPublicUri)
+		if err != nil {
+			return nil, err
+		}
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			err = fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			return nil, err
@@ -140,6 +155,12 @@ func verifyToken(ctx context.Context, r *redis.Client, tokenString string) (toke
 			return nil, fmt.Errorf("invalid token")
 		}
 
+		serializedKey, err := json.Marshal(rawKey)
+
+		logger.Info("Jwk get from sso", logrus.Fields{"jwk": fmt.Sprintf("%v", rawKey)})
+		r.Set(ctx, constants.JwkKey, serializedKey, 10*time.Second)
+		r.Set(ctx, "debugField", serializedKey, 10*time.Minute)
+		logger.Info("Jwk get from sso and saved to cache", logrus.Fields{"jwk": rawKey})
 		return rawKey, err
 	})
 

@@ -26,7 +26,8 @@ type App struct {
 }
 
 func NewApp() (*App, error) {
-	conn, err := utils.SetupPostgresConnection()
+	postgreConn, err := utils.SetupPostgresConnection()
+	redisClient := utils.SetupRedisConn()
 	if err != nil {
 		return nil, err
 	}
@@ -34,8 +35,8 @@ func NewApp() (*App, error) {
 	router := setupRouter()
 
 	api := router.Group(constants.EndpointV1)
-	V1Routes.NewPetitionRoute(api, conn).RegisterRoutes()
-	V1Routes.NewUserRoutes(api, conn).RegisterRoutes()
+	V1Routes.NewPetitionRoute(api, postgreConn, redisClient).RegisterRoutes()
+	V1Routes.NewUserRoutes(api, postgreConn, redisClient).RegisterRoutes()
 
 	server := &http.Server{
 		Addr:           fmt.Sprintf(":%d", config.AppConfig.Port),

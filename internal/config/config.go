@@ -20,6 +20,10 @@ type Config struct {
 	AUTHRealm            string `mapstructure:"AUTH_REALM"`
 	AUTHClient           string `mapstructure:"AUTH_CLIENT"`
 	AUTHUserInfoEndpoint string `mapstructure:"AUTH_USER_INFO_ENDPOINT"`
+
+	RedisAddress  string `mapstructure:"REDIS_ADDRESS"`
+	RedisPassword string `mapstructure:"REDIS_PASSWORD"`
+	RedisDB       int    `mapstructure:"REDIS_DB"`
 }
 
 func InitializeAppConfig() (err error) {

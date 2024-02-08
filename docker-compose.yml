@@ -4,26 +4,26 @@ name: "change-it"
 
 services:
 
-  backend:
-    image: ge0rg25/changeit-golnag:latest
-    ports:
-      - "2000:2000"
-    environment:
-      PORT: 2000
-      ENVIRONMENT: development
-      DEBUG: true
-      DB_POSTGRE_DRIVER: postgres
-      DB_POSTGRE_DSN: "user=postgres password=postgres host=database port=5432 dbname=change-it sslmode=disable connect_timeout=30"
-      DB_POSTGRE_URL: postgres://postgres:postgres@database/change-it
-      AUTH_REALM: changeit-realm
-      AUTH_CLIENT: changeit-client
-      AUTH_JWK_SECRET_URI: http://auth:8180/realms/changeit-realm/protocol/openid-connect/certs
-      AUTH_USER_INFO_ENDPOINT: http://auth:8180/realms/changeit-realm/protocol/openid-connect/userinfo
-    depends_on:
-      - database
-      - auth
-    networks:
-      - backend
+#  backend:
+#    image: ge0rg25/changeit-golnag:latest
+#    ports:
+#      - "2000:2000"
+#    environment:
+#      PORT: 2000
+#      ENVIRONMENT: development
+#      DEBUG: true
+#      DB_POSTGRE_DRIVER: postgres
+#      DB_POSTGRE_DSN: "user=postgres password=postgres host=database port=5432 dbname=change-it sslmode=disable connect_timeout=30"
+#      DB_POSTGRE_URL: postgres://postgres:postgres@database/change-it
+#      AUTH_REALM: changeit-realm
+#      AUTH_CLIENT: changeit-client
+#      AUTH_JWK_SECRET_URI: http://auth:8180/realms/changeit-realm/protocol/openid-connect/certs
+#      AUTH_USER_INFO_ENDPOINT: http://auth:8180/realms/changeit-realm/protocol/openid-connect/userinfo
+#    depends_on:
+#      - database
+#      - auth
+#    networks:
+#      - backend
 
 
   database:
@@ -58,7 +58,20 @@ services:
       - backend
 
 
+  cache:
+    image: redis:latest
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass password
+    volumes:
+      - cache:/data
+    networks:
+      - backend
+
+
 volumes:
+  cache:
   userdata:
 
 networks:
