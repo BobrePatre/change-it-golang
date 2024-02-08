@@ -12,86 +12,88 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/mitchellh/mapstructure"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 )
 
-func KeycloakAuthMiddleware(roles ...string) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+func KeycloakAuthMiddleware(rdc *redis.Client) func(roles ...string) gin.HandlerFunc {
+	return func(roles ...string) gin.HandlerFunc {
+		return func(ctx *gin.Context) {
+			authHeader := ctx.GetHeader("Authorization")
 
-		authHeader := ctx.GetHeader("Authorization")
+			if authHeader == "" {
+				ctx.JSON(http.StatusUnauthorized, gin.H{"message": "No token provided"})
+				ctx.Abort()
+				return
+			}
 
-		if authHeader == "" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "No token provided"})
-			ctx.Abort()
-			return
-		}
+			if headerArr := strings.Split(authHeader, " "); len(headerArr) != 2 || headerArr[0] != "Bearer" {
+				logger.Error("Invalid token format", nil)
+				ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+				ctx.Abort()
+				return
+			}
 
-		if headerArr := strings.Split(authHeader, " "); len(headerArr) != 2 || headerArr[0] != "Bearer" {
-			logger.Error("Invalid token format", nil)
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
-			ctx.Abort()
-			return
-		}
+			token, err := verifyToken(ctx, rdc, strings.Split(authHeader, " ")[1])
 
-		token, err := verifyToken(ctx, strings.Split(authHeader, " ")[1])
+			if err != nil {
+				logger.Error("cannot verify token", logrus.Fields{"err": err.Error()})
+				ctx.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+				ctx.Abort()
+				return
+			}
 
-		if err != nil {
-			logger.Error("cannot verify token", logrus.Fields{"err": err.Error()})
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
-			ctx.Abort()
-			return
-		}
+			claims, ok := token.Claims.(jwt.MapClaims)
+			if !(ok && token.Valid) {
+				logger.Error("cannot get claims", logrus.Fields{"err": err.Error()})
+				ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+				ctx.Abort()
+				return
+			}
 
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !(ok && token.Valid) {
-			logger.Error("cannot get claims", logrus.Fields{"err": err.Error()})
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
-			ctx.Abort()
-			return
-		}
+			if claims["sub"] == "" || claims["sub"] == nil {
+				ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+				ctx.Abort()
+				return
+			}
 
-		if claims["sub"] == "" || claims["sub"] == nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
-			ctx.Abort()
-			return
-		}
-
-		var userRoles []string
-		if resourceAccess, ok := claims["resource_access"].(map[string]interface{}); ok {
-			if authClient, ok := resourceAccess[config.AppConfig.AUTHClient].(map[string]interface{}); ok {
-				if err := mapstructure.Decode(authClient["roles"], &userRoles); err != nil {
-					logger.Error("cannot get user roles", logrus.Fields{"err": err.Error()})
-					userRoles = []string{}
+			var userRoles []string
+			if resourceAccess, ok := claims["resource_access"].(map[string]interface{}); ok {
+				if authClient, ok := resourceAccess[config.AppConfig.AUTHClient].(map[string]interface{}); ok {
+					if err := mapstructure.Decode(authClient["roles"], &userRoles); err != nil {
+						logger.Error("cannot get user roles", logrus.Fields{"err": err.Error()})
+						userRoles = []string{}
+					}
 				}
 			}
-		}
 
-		userEmail, ok := claims["email"].(string)
-		if !ok {
-			userEmail = ""
-		}
-		ctx.Set(constants.UserDetails, V1Domains.UserDetails{
-			Roles:      userRoles,
-			UserId:     claims["sub"].(string),
-			Email:      userEmail,
-			Username:   claims["preferred_username"].(string),
-			Name:       claims["name"].(string),
-			FamilyName: claims["family_name"].(string),
-		})
+			userEmail, ok := claims["email"].(string)
+			if !ok {
+				userEmail = ""
+			}
+			ctx.Set(constants.UserDetails, V1Domains.UserDetails{
+				Roles:      userRoles,
+				UserId:     claims["sub"].(string),
+				Email:      userEmail,
+				Username:   claims["preferred_username"].(string),
+				Name:       claims["name"].(string),
+				FamilyName: claims["family_name"].(string),
+			})
 
-		if len(roles) == 0 {
+			if len(roles) == 0 {
+				ctx.Next()
+				return
+			}
+
+			if !isUserHaveRoles(roles, userRoles) {
+				ctx.Status(http.StatusForbidden)
+				ctx.Abort()
+			}
+
 			ctx.Next()
-			return
 		}
-
-		if !isUserHaveRoles(roles, userRoles) {
-			ctx.Status(http.StatusForbidden)
-			ctx.Abort()
-		}
-
-		ctx.Next()
 	}
 }
 
@@ -104,7 +106,7 @@ func isUserHaveRoles(roles []string, userRoles []string) bool {
 	return false
 }
 
-func verifyToken(ctx context.Context, tokenString string) (token *jwt.Token, err error) {
+func verifyToken(ctx context.Context, r *redis.Client, tokenString string) (token *jwt.Token, err error) {
 
 	if err := verifyTokenSession(tokenString); err != nil {
 		return nil, err
