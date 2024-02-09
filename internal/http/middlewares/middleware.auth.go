@@ -16,7 +16,9 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
+	"math/big"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -120,13 +122,8 @@ func verifyToken(ctx context.Context, r *redis.Client, tokenString string) (toke
 		result, err := r.Get(ctx, constants.JwkKey).Result()
 		if err == nil {
 			logger.Info("Jwk get from cache", nil)
-			var resultKey *rsa.PublicKey
-			// TODO: fix serialize and desirialize key for redis
-			err := json.Unmarshal([]byte(result), &resultKey)
-			if err != nil {
-				return nil, err
-			}
-			return resultKey, nil
+			resultKey := deserializePublicKey(result)
+			return &resultKey, nil
 		}
 
 		set, err := jwk.Fetch(ctx, config.AppConfig.AUTHJwkPublicUri)
@@ -155,11 +152,8 @@ func verifyToken(ctx context.Context, r *redis.Client, tokenString string) (toke
 			return nil, fmt.Errorf("invalid token")
 		}
 
-		serializedKey, err := json.Marshal(rawKey)
-
-		logger.Info("Jwk get from sso", logrus.Fields{"jwk": fmt.Sprintf("%v", rawKey)})
-		r.Set(ctx, constants.JwkKey, serializedKey, 10*time.Second)
-		r.Set(ctx, "debugField", serializedKey, 10*time.Minute)
+		serialRawKey := serializePublicKey(*rawKey.(*rsa.PublicKey))
+		r.Set(ctx, constants.JwkKey, serialRawKey, time.Duration(config.AppConfig.AUTHRefreshJwkTimeout)*time.Second)
 		logger.Info("Jwk get from sso and saved to cache", logrus.Fields{"jwk": rawKey})
 		return rawKey, err
 	})
@@ -192,4 +186,37 @@ func verifyTokenSession(tokenString string) (err error) {
 	logger.Info("token session is ok", nil)
 
 	return nil
+}
+
+func serializePublicKey(key rsa.PublicKey) string {
+	serialized := map[string]string{
+		"N": key.N.String(),
+		"E": fmt.Sprintf("%d", key.E),
+	}
+	serializedKey, err := json.Marshal(serialized)
+	if err != nil {
+		panic(err)
+	}
+	return string(serializedKey)
+}
+
+// DeserializePublicKey deserializes a string into an RSA public key
+func deserializePublicKey(serializedKey string) rsa.PublicKey {
+	var serialized map[string]string
+	if err := json.Unmarshal([]byte(serializedKey), &serialized); err != nil {
+		panic(err)
+	}
+
+	N := new(big.Int)
+	N.SetString(serialized["N"], 10)
+
+	E, err := strconv.ParseInt(serialized["E"], 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	return rsa.PublicKey{
+		N: N,
+		E: int(E),
+	}
 }
