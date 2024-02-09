@@ -154,7 +154,7 @@ func verifyToken(ctx context.Context, r *redis.Client, tokenString string) (toke
 
 		serialRawKey := serializePublicKey(*rawKey.(*rsa.PublicKey))
 		r.Set(ctx, constants.JwkKey, serialRawKey, time.Duration(config.AppConfig.AUTHRefreshJwkTimeout)*time.Second)
-		logger.Info("Jwk get from sso and saved to cache", logrus.Fields{"jwk": rawKey})
+		logger.Info("Jwk get from sso and saved to cache", nil)
 		return rawKey, err
 	})
 
